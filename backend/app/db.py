@@ -124,13 +124,32 @@ def _seed_whitelist(conn: sqlite3.Connection) -> None:
 
 
 def _seed_settings(conn: sqlite3.Connection) -> None:
-    """Inicializa el toggle de whitelist si aún no existe."""
+    """Inicializa los toggles si aún no existen."""
     conn.execute(
         "INSERT OR IGNORE INTO app_settings (key, value) VALUES ('whitelist_enabled', '1')"
+    )
+    conn.execute(
+        "INSERT OR IGNORE INTO app_settings (key, value) VALUES ('reto_enabled', '0')"
     )
 
 
 # ── Whitelist helpers ────────────────────────────────────────────────────
+
+
+def is_reto_enabled(conn: sqlite3.Connection) -> bool:
+    """Retorna True si el reto está activo y acepta envíos."""
+    row = conn.execute(
+        "SELECT value FROM app_settings WHERE key = 'reto_enabled'"
+    ).fetchone()
+    return row is not None and row["value"] == "1"
+
+
+def set_reto_enabled(conn: sqlite3.Connection, enabled: bool) -> None:
+    """Activa o desactiva el reto."""
+    conn.execute(
+        "INSERT OR REPLACE INTO app_settings (key, value) VALUES ('reto_enabled', ?)",
+        ("1" if enabled else "0",),
+    )
 
 
 def is_whitelist_enabled(conn: sqlite3.Connection) -> bool:

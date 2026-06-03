@@ -49,6 +49,24 @@
 
       <div id="config-panel" hidden>
 
+        <!-- Control del reto -->
+        <section class="card" id="reto-card" style="margin-bottom:1.5rem">
+          <h2>Control del reto</h2>
+          <div class="toggle-row">
+            <span>Estado:</span>
+            <span id="reto-badge" class="badge">…</span>
+          </div>
+          <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:1rem">
+            Mientras esté <strong>inactivo</strong>, nadie puede enviar soluciones.
+            Actívalo justo cuando quieras dar la señal de inicio.
+          </p>
+          <div style="display:flex;gap:0.75rem">
+            <button id="btn-reto-start" class="secondary">▶ Iniciar reto</button>
+            <button id="btn-reto-stop"  class="secondary">⏹ Detener reto</button>
+          </div>
+          <p id="reto-msg" style="margin-top:0.75rem;font-size:0.85rem" hidden></p>
+        </section>
+
         <!-- Accesos rápidos -->
         <section class="card">
           <h2>Accesos rápidos</h2>

@@ -86,6 +86,7 @@ class WhitelistEntry(BaseModel):
 class ConfigResponse(BaseModel):
     whitelist_enabled: bool
     whitelist_count: int
+    reto_enabled: bool
 
 
 class AddEmailRequest(BaseModel):

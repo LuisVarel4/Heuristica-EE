@@ -337,6 +337,12 @@ form.addEventListener("submit", async (event) => {
     });
     const data = await res.json().catch(() => ({}));
 
+    if (res.status === 403) {
+      const msg = typeof data.detail === "string" ? data.detail : "No autorizado.";
+      showError(msg);
+      submitBtn.disabled = false;
+      return;
+    }
     if (res.status === 429) {
       const detail = data.detail || {};
       const next = detail.next_submit_at;

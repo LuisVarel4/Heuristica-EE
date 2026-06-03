@@ -10,6 +10,10 @@ const btnLogout     = document.getElementById("btn-logout");
 const configPanel   = document.getElementById("config-panel");
 const wlBadge       = document.getElementById("wl-badge");
 const wlCount       = document.getElementById("wl-count");
+const retoBadge     = document.getElementById("reto-badge");
+const btnRetoStart  = document.getElementById("btn-reto-start");
+const btnRetoStop   = document.getElementById("btn-reto-stop");
+const retoMsg       = document.getElementById("reto-msg");
 const btnEnable     = document.getElementById("btn-enable");
 const btnDisable    = document.getElementById("btn-disable");
 const toggleMsg     = document.getElementById("toggle-msg");
@@ -35,6 +39,11 @@ function renderBadge(enabled) {
   wlBadge.className   = "badge " + (enabled ? "badge-on" : "badge-off");
 }
 
+function renderRetoBadge(enabled) {
+  retoBadge.textContent = enabled ? "🟢 ACTIVO" : "🔴 INACTIVO";
+  retoBadge.className   = "badge " + (enabled ? "badge-on" : "badge-off");
+}
+
 async function loadConfig() {
   authError.hidden = true;
   const res = await fetch(`${API}/admin/config?key=${encodeURIComponent(getKey())}`);
@@ -56,8 +65,31 @@ async function loadConfig() {
   sessionBar.hidden     = false;
   sessionBar.style.display = "flex";
   configPanel.hidden    = false;
+  renderRetoBadge(data.reto_enabled);
   renderBadge(data.whitelist_enabled);
   wlCount.textContent = data.whitelist_count;
+}
+
+async function toggleReto(enabled) {
+  retoMsg.hidden = true;
+  const res = await fetch(
+    `${API}/admin/reto/toggle?key=${encodeURIComponent(getKey())}`,
+    { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled }) }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    retoMsg.textContent = data.detail || "Error.";
+    retoMsg.style.color = "#ff8888";
+    retoMsg.hidden = false;
+    return;
+  }
+  renderRetoBadge(data.reto_enabled);
+  retoMsg.textContent = data.reto_enabled
+    ? "✓ Reto iniciado — los estudiantes ya pueden enviar."
+    : "⏹ Reto detenido — no se aceptan más envíos.";
+  retoMsg.style.color = data.reto_enabled ? "#6effa0" : "#f0a500";
+  retoMsg.hidden = false;
 }
 
 async function toggleWhitelist(enabled) {
@@ -136,8 +168,10 @@ async function addEmail() {
 // ── Eventos ──────────────────────────────────────────────────────────────
 loadBtn.addEventListener("click", loadConfig);
 adminKeyInput.addEventListener("keydown", e => { if (e.key === "Enter") loadConfig(); });
-btnEnable.addEventListener("click",  () => toggleWhitelist(true));
-btnDisable.addEventListener("click", () => toggleWhitelist(false));
+btnRetoStart.addEventListener("click", () => toggleReto(true));
+btnRetoStop.addEventListener("click",  () => toggleReto(false));
+btnEnable.addEventListener("click",    () => toggleWhitelist(true));
+btnDisable.addEventListener("click",   () => toggleWhitelist(false));
 btnSearch.addEventListener("click", searchEmail);
 searchInput.addEventListener("keydown", e => { if (e.key === "Enter") searchEmail(); });
 btnAdd.addEventListener("click", addEmail);

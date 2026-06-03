@@ -19,10 +19,12 @@ from app.db import (
     init_db,
     insert_submission,
     is_email_whitelisted,
+    is_reto_enabled,
     is_whitelist_enabled,
     list_whitelist,
     parse_iso,
     seconds_since,
+    set_reto_enabled,
     set_whitelist_enabled,
 )
 from app.schemas import (
@@ -195,10 +197,12 @@ def admin_get_config(key: str | None = Query(None, max_length=128)) -> ConfigRes
     _check_admin_key(key)
     with get_db() as conn:
         enabled = is_whitelist_enabled(conn)
-        rows = list_whitelist(conn)
+        rows    = list_whitelist(conn)
+        reto    = is_reto_enabled(conn)
     return ConfigResponse(
         whitelist_enabled=enabled,
         whitelist_count=len(rows),
+        reto_enabled=reto,
     )
 
 
@@ -250,6 +254,18 @@ def admin_add_email(
     return {"ok": True, "email": body.email}
 
 
+@app.post("/admin/reto/toggle", include_in_schema=False)
+def admin_toggle_reto(
+    body: ToggleWhitelistRequest,
+    key: str | None = Query(None, max_length=128),
+) -> dict:
+    """Activa o desactiva la recepción de envíos del reto."""
+    _check_admin_key(key)
+    with get_db() as conn:
+        set_reto_enabled(conn, body.enabled)
+    return {"ok": True, "reto_enabled": body.enabled}
+
+
 @app.post("/admin/config/toggle", include_in_schema=False)
 def admin_toggle_whitelist(
     body: ToggleWhitelistRequest,
@@ -290,8 +306,14 @@ def pagina_admin_config() -> FileResponse:
 async def submit(body: SubmitRequest) -> SubmitResponse:
     email = body.email
 
-    # Verificar lista blanca (si está habilitada)
     with get_db() as conn:
+        # Verificar que el reto esté activo
+        if not is_reto_enabled(conn):
+            raise HTTPException(
+                status_code=403,
+                detail="El reto aún no ha comenzado. ¡Espera la señal de inicio!",
+            )
+        # Verificar lista blanca (si está habilitada)
         if is_whitelist_enabled(conn) and not is_email_whitelisted(conn, email):
             raise HTTPException(
                 status_code=403,
@@ -299,6 +321,7 @@ async def submit(body: SubmitRequest) -> SubmitResponse:
             )
 
     can_submit, remaining, next_at = cooldown_state(email)
+
     if not can_submit:
         raise HTTPException(
             status_code=429,
