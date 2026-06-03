@@ -76,3 +76,26 @@ class LeaderboardAdminEntry(BaseModel):
 
 class LeaderboardAdminResponse(BaseModel):
     entries: list[LeaderboardAdminEntry]
+
+
+class WhitelistEntry(BaseModel):
+    email: str
+    added_at: str
+
+
+class ConfigResponse(BaseModel):
+    whitelist_enabled: bool
+    whitelist: list[WhitelistEntry]
+
+
+class AddEmailRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+
+    @field_validator("email")
+    @classmethod
+    def must_be_unal(cls, value: str) -> str:
+        return normalize_unal_email(value)
+
+
+class ToggleWhitelistRequest(BaseModel):
+    enabled: bool

@@ -10,16 +10,23 @@ from app.algorithm import AlgorithmServiceError, run_algorithm
 from app.config import settings
 from app.email_rules import normalize_unal_email
 from app.db import (
+    add_to_whitelist,
     fetch_leaderboard,
     get_best_fitness,
     get_db,
     get_last_submission_time,
     init_db,
     insert_submission,
+    is_email_whitelisted,
+    is_whitelist_enabled,
+    list_whitelist,
     parse_iso,
     seconds_since,
+    set_whitelist_enabled,
 )
 from app.schemas import (
+    AddEmailRequest,
+    ConfigResponse,
     CooldownResponse,
     LeaderboardAdminEntry,
     LeaderboardAdminResponse,
@@ -27,6 +34,8 @@ from app.schemas import (
     LeaderboardResponse,
     SubmitRequest,
     SubmitResponse,
+    ToggleWhitelistRequest,
+    WhitelistEntry,
 )
 
 app = FastAPI(title="Heuristica EE", version="1.0.0")
@@ -174,6 +183,45 @@ def leaderboard_admin(
     return LeaderboardAdminResponse(entries=_build_admin_entries(rows))
 
 
+@app.get("/admin/config", response_model=ConfigResponse, include_in_schema=False)
+def admin_get_config(key: str | None = Query(None, max_length=128)) -> ConfigResponse:
+    """Retorna el estado actual de la lista blanca y los correos registrados."""
+    _check_admin_key(key)
+    with get_db() as conn:
+        enabled = is_whitelist_enabled(conn)
+        rows = list_whitelist(conn)
+    return ConfigResponse(
+        whitelist_enabled=enabled,
+        whitelist=[WhitelistEntry(email=r["email"], added_at=r["added_at"]) for r in rows],
+    )
+
+
+@app.post("/admin/config/whitelist", include_in_schema=False)
+def admin_add_email(
+    body: AddEmailRequest,
+    key: str | None = Query(None, max_length=128),
+) -> dict:
+    """Agrega un correo a la lista blanca."""
+    _check_admin_key(key)
+    with get_db() as conn:
+        added = add_to_whitelist(conn, body.email)
+    if not added:
+        raise HTTPException(status_code=409, detail="El correo ya está en la lista.")
+    return {"ok": True, "email": body.email}
+
+
+@app.post("/admin/config/toggle", include_in_schema=False)
+def admin_toggle_whitelist(
+    body: ToggleWhitelistRequest,
+    key: str | None = Query(None, max_length=128),
+) -> dict:
+    """Activa o desactiva la verificación de lista blanca."""
+    _check_admin_key(key)
+    with get_db() as conn:
+        set_whitelist_enabled(conn, body.enabled)
+    return {"ok": True, "whitelist_enabled": body.enabled}
+
+
 @app.get("/resultados/ocultos", include_in_schema=False)
 def pagina_resultados_ocultos() -> FileResponse:
     path = _frontend / "resultados" / "ocultos.html"
@@ -182,9 +230,26 @@ def pagina_resultados_ocultos() -> FileResponse:
     return FileResponse(path)
 
 
+@app.get("/admin", include_in_schema=False)
+def pagina_admin_config() -> FileResponse:
+    path = _frontend / "admin" / "index.html"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Admin config page not found")
+    return FileResponse(path)
+
+
 @app.post("/api/submit", response_model=SubmitResponse)
 async def submit(body: SubmitRequest) -> SubmitResponse:
     email = body.email
+
+    # Verificar lista blanca (si está habilitada)
+    with get_db() as conn:
+        if is_whitelist_enabled(conn) and not is_email_whitelisted(conn, email):
+            raise HTTPException(
+                status_code=403,
+                detail="Este correo no está habilitado para participar en el reto.",
+            )
+
     can_submit, remaining, next_at = cooldown_state(email)
     if not can_submit:
         raise HTTPException(

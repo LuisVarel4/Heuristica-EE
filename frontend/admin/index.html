@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — Configuración</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+      @media (max-width: 700px) { .admin-grid { grid-template-columns: 1fr; } }
+      .toggle-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+      .badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+      .badge-on  { background: #1a5c2a; color: #6effa0; }
+      .badge-off { background: #5c1a1a; color: #ffaaaa; }
+      .email-list { max-height: 340px; overflow-y: auto; font-size: 0.85rem; }
+      .email-list li { padding: 0.25rem 0; border-bottom: 1px solid #1e3a5f; }
+      .key-gate { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+      .key-gate input { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <header>
+        <h1>Panel de configuración — Admin</h1>
+        <p class="subtitle">No compartir este enlace.</p>
+      </header>
+
+      <section class="card">
+        <h2>Autenticación</h2>
+        <div class="key-gate">
+          <input type="password" id="admin-key" placeholder="Admin key" />
+          <button id="load-btn">Cargar configuración</button>
+        </div>
+        <p id="auth-error" class="error" hidden></p>
+      </section>
+
+      <div id="config-panel" hidden>
+        <div class="admin-grid">
+
+          <!-- Toggle whitelist -->
+          <section class="card">
+            <h2>Lista blanca</h2>
+            <div class="toggle-row">
+              <span>Estado actual:</span>
+              <span id="wl-badge" class="badge">…</span>
+            </div>
+            <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:1rem">
+              Si está <strong>desactivada</strong>, cualquier correo
+              <code>@unal.edu.co</code> puede participar.
+            </p>
+            <div style="display:flex;gap:0.75rem">
+              <button id="btn-enable"  class="secondary">Activar</button>
+              <button id="btn-disable" class="secondary">Desactivar</button>
+            </div>
+            <p id="toggle-msg" style="margin-top:0.75rem;font-size:0.85rem" hidden></p>
+          </section>
+
+          <!-- Agregar correo -->
+          <section class="card">
+            <h2>Agregar correo</h2>
+            <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:1rem">
+              Usa esto si un estudiante tiene un correo que no quedó en la lista inicial.
+            </p>
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+              <input type="email" id="new-email" placeholder="correo@unal.edu.co" style="flex:1" />
+              <button id="btn-add">Agregar</button>
+            </div>
+            <p id="add-msg" style="font-size:0.85rem" hidden></p>
+          </section>
+        </div>
+
+        <!-- Lista de correos -->
+        <section class="card" style="margin-top:1.5rem">
+          <h2>Correos en la lista blanca (<span id="wl-count">0</span>)</h2>
+          <ul id="wl-list" class="email-list"></ul>
+        </section>
+      </div>
+
+    </main>
+    <script src="/admin/admin.js"></script>
+  </body>
+</html>
