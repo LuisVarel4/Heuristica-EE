@@ -181,11 +181,11 @@ function plotPopulation(canvas, genData, globalX, showChildren) {
 
   // Individuos
   if (genData) {
-    // Hijos (enjambre): puntitos azul claro tenues, debajo de los padres
+    // Hijos (enjambre): puntos azul claro, debajo de los padres
     if (showChildren && genData.hijos && genData.hijos.length) {
-      ctx.fillStyle = "#6fa8dc"; ctx.globalAlpha = 0.45;
+      ctx.fillStyle = "#7cc3ff"; ctx.globalAlpha = 0.7;
       genData.hijos.forEach((x) => {
-        ctx.beginPath(); ctx.arc(sx(x), sy(fitness(x)), 2.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(sx(x), sy(fitness(x)), 3.5, 0, Math.PI * 2); ctx.fill();
       });
       ctx.globalAlpha = 1;
     }
@@ -321,7 +321,7 @@ function startPlay() {
     if (v >= max) { stopPlay(); return; }
     genSlider.value = v + 1;
     renderCharts();
-  }, 120);
+  }, 450);
 }
 
 // ── Ejecución ────────────────────────────────────────────────────────────
