@@ -4,6 +4,9 @@ const SESSION_KEY = "heuristica_admin_key";
 const adminKeyInput = document.getElementById("admin-key");
 const loadBtn       = document.getElementById("load-btn");
 const authError     = document.getElementById("auth-error");
+const authSection   = document.getElementById("auth-section");
+const sessionBar    = document.getElementById("session-bar");
+const btnLogout     = document.getElementById("btn-logout");
 const panel         = document.getElementById("panel");
 const newEmailInput = document.getElementById("new-email");
 const btnAdd        = document.getElementById("btn-add");
@@ -38,12 +41,16 @@ async function loadEmails() {
       : "Admin key incorrecta.";
     authError.hidden = false;
     panel.hidden = true;
+    authSection.hidden = false;
+    sessionBar.hidden  = true;
     sessionStorage.removeItem(SESSION_KEY);
     return;
   }
   if (!res.ok) { authError.textContent = "Error al cargar."; authError.hidden = false; return; }
   const data = await res.json();
   sessionStorage.setItem(SESSION_KEY, getKey());
+  authSection.hidden = true;
+  sessionBar.hidden  = false;
   allEmails = data.emails;
   panel.hidden = false;
   renderList();
@@ -77,6 +84,15 @@ adminKeyInput.addEventListener("keydown", e => { if (e.key === "Enter") loadEmai
 btnAdd.addEventListener("click", addEmail);
 newEmailInput.addEventListener("keydown", e => { if (e.key === "Enter") addEmail(); });
 filterInput.addEventListener("input", renderList);
+
+btnLogout.addEventListener("click", () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  adminKeyInput.value = "";
+  authSection.hidden = false;
+  sessionBar.hidden  = true;
+  panel.hidden = true;
+  authError.hidden = true;
+});
 
 // Restaurar sesión
 const saved = sessionStorage.getItem(SESSION_KEY);

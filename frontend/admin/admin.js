@@ -4,6 +4,9 @@ const SESSION_KEY = "heuristica_admin_key";
 const adminKeyInput = document.getElementById("admin-key");
 const loadBtn       = document.getElementById("load-btn");
 const authError     = document.getElementById("auth-error");
+const authSection   = document.getElementById("auth-section");
+const sessionBar    = document.getElementById("session-bar");
+const btnLogout     = document.getElementById("btn-logout");
 const configPanel   = document.getElementById("config-panel");
 const wlBadge       = document.getElementById("wl-badge");
 const wlCount       = document.getElementById("wl-count");
@@ -35,12 +38,16 @@ async function loadConfig() {
       : "Admin key incorrecta.";
     authError.hidden = false;
     configPanel.hidden = true;
+    authSection.hidden = false;
+    sessionBar.hidden  = true;
     sessionStorage.removeItem(SESSION_KEY);
     return;
   }
   if (!res.ok) { authError.textContent = "Error al cargar."; authError.hidden = false; return; }
   const data = await res.json();
   saveKey(getKey());
+  authSection.hidden = true;
+  sessionBar.hidden  = false;
   configPanel.hidden = false;
   renderBadge(data.whitelist_enabled);
   wlCount.textContent = data.whitelist_count;
@@ -127,6 +134,15 @@ btnDisable.addEventListener("click", () => toggleWhitelist(false));
 btnSearch.addEventListener("click", searchEmail);
 searchInput.addEventListener("keydown", e => { if (e.key === "Enter") searchEmail(); });
 btnAdd.addEventListener("click", addEmail);
+
+btnLogout.addEventListener("click", () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  adminKeyInput.value = "";
+  authSection.hidden = false;
+  sessionBar.hidden  = true;
+  configPanel.hidden = true;
+  authError.hidden   = true;
+});
 
 // Restaurar sesión si ya había ingresado antes
 const saved = sessionStorage.getItem(SESSION_KEY);

@@ -5,6 +5,9 @@ const DECIMALS = 12;
 const adminKeyInput    = document.getElementById("admin-key");
 const loadBtn          = document.getElementById("load-btn");
 const adminError       = document.getElementById("admin-error");
+const authSection      = document.getElementById("auth-section");
+const sessionBar       = document.getElementById("session-bar");
+const btnLogout        = document.getElementById("btn-logout");
 const leaderboardPanel = document.getElementById("leaderboard-panel");
 const leaderboardBody  = document.getElementById("leaderboard-body");
 const refreshBtn       = document.getElementById("refresh-btn");
@@ -49,6 +52,8 @@ async function loadAdminLeaderboard() {
       : "Admin key incorrecta.";
     adminError.hidden = false;
     leaderboardPanel.hidden = true;
+    authSection.hidden = false;
+    sessionBar.hidden  = true;
     sessionStorage.removeItem(SESSION_KEY);
     return;
   }
@@ -59,6 +64,8 @@ async function loadAdminLeaderboard() {
   }
 
   sessionStorage.setItem(SESSION_KEY, getKey());
+  authSection.hidden = true;
+  sessionBar.hidden  = false;
   leaderboardPanel.hidden = false;
 
   const data = await res.json();
@@ -85,6 +92,15 @@ async function loadAdminLeaderboard() {
 loadBtn.addEventListener("click", loadAdminLeaderboard);
 adminKeyInput.addEventListener("keydown", e => { if (e.key === "Enter") loadAdminLeaderboard(); });
 refreshBtn.addEventListener("click", loadAdminLeaderboard);
+
+btnLogout.addEventListener("click", () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  adminKeyInput.value = "";
+  authSection.hidden = false;
+  sessionBar.hidden  = true;
+  leaderboardPanel.hidden = true;
+  adminError.hidden = true;
+});
 
 // Restaurar sesión
 const saved = sessionStorage.getItem(SESSION_KEY);
