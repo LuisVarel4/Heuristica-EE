@@ -10,10 +10,9 @@ const btnLogout     = document.getElementById("btn-logout");
 const configPanel   = document.getElementById("config-panel");
 const wlBadge       = document.getElementById("wl-badge");
 const wlCount       = document.getElementById("wl-count");
-const retoBadge     = document.getElementById("reto-badge");
-const btnRetoStart  = document.getElementById("btn-reto-start");
-const btnRetoStop   = document.getElementById("btn-reto-stop");
-const retoMsg       = document.getElementById("reto-msg");
+const retoBadge      = document.getElementById("reto-badge");
+const btnRetoToggle  = document.getElementById("btn-reto-toggle");
+const retoMsg        = document.getElementById("reto-msg");
 const btnEnable     = document.getElementById("btn-enable");
 const btnDisable    = document.getElementById("btn-disable");
 const toggleMsg     = document.getElementById("toggle-msg");
@@ -42,6 +41,10 @@ function renderBadge(enabled) {
 function renderRetoBadge(enabled) {
   retoBadge.textContent = enabled ? "🟢 ACTIVO" : "🔴 INACTIVO";
   retoBadge.className   = "badge " + (enabled ? "badge-on" : "badge-off");
+  btnRetoToggle.textContent   = enabled ? "⏹ Detener reto" : "▶ Iniciar reto";
+  btnRetoToggle.style.background = enabled ? "#5c1a1a" : "#1a5c2a";
+  btnRetoToggle.style.color      = enabled ? "#ffaaaa" : "#6effa0";
+  btnRetoToggle.dataset.current  = enabled ? "1" : "0";
 }
 
 async function loadConfig() {
@@ -168,8 +171,10 @@ async function addEmail() {
 // ── Eventos ──────────────────────────────────────────────────────────────
 loadBtn.addEventListener("click", loadConfig);
 adminKeyInput.addEventListener("keydown", e => { if (e.key === "Enter") loadConfig(); });
-btnRetoStart.addEventListener("click", () => toggleReto(true));
-btnRetoStop.addEventListener("click",  () => toggleReto(false));
+btnRetoToggle.addEventListener("click", () => {
+  const currentlyActive = btnRetoToggle.dataset.current === "1";
+  toggleReto(!currentlyActive);
+});
 btnEnable.addEventListener("click",    () => toggleWhitelist(true));
 btnDisable.addEventListener("click",   () => toggleWhitelist(false));
 btnSearch.addEventListener("click", searchEmail);
