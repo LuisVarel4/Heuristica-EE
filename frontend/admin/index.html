@@ -89,6 +89,26 @@
           </button>
         </section>
 
+        <!-- Modal detener reto -->
+        <div id="stop-reto-modal" hidden style="position:fixed;inset:0;background:rgba(0,0,0,0.7);
+             z-index:999;align-items:center;justify-content:center">
+          <div style="background:#0e1f30;border:1px solid #5c1a1a;border-radius:10px;
+                      padding:2rem;max-width:380px;width:90%">
+            <h3 style="color:#ff8888;margin-top:0">⏹ Detener reto</h3>
+            <p style="font-size:0.875rem;color:#8fa8be;margin-bottom:1.5rem">
+              Los estudiantes dejarán de poder enviar soluciones inmediatamente.
+            </p>
+            <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+              <button id="btn-cancel-stop" class="secondary">Cancelar</button>
+              <button id="btn-confirm-stop" style="background:#5c1a1a;color:#ffaaaa;
+                      border:1px solid #ff8888;padding:0.4rem 1rem;border-radius:6px;
+                      cursor:pointer;font-weight:600">
+                Sí, detener
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Modal limpiar leaderboard -->
         <div id="clear-modal" hidden style="position:fixed;inset:0;background:rgba(0,0,0,0.7);
              z-index:999;align-items:center;justify-content:center">

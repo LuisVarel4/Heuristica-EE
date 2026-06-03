@@ -10,10 +10,13 @@ const btnLogout     = document.getElementById("btn-logout");
 const configPanel   = document.getElementById("config-panel");
 const wlBadge       = document.getElementById("wl-badge");
 const wlCount       = document.getElementById("wl-count");
-const retoBadge      = document.getElementById("reto-badge");
-const retoTimer      = document.getElementById("reto-timer");
-const btnRetoToggle  = document.getElementById("btn-reto-toggle");
-const retoMsg        = document.getElementById("reto-msg");
+const retoBadge       = document.getElementById("reto-badge");
+const retoTimer       = document.getElementById("reto-timer");
+const btnRetoToggle   = document.getElementById("btn-reto-toggle");
+const retoMsg         = document.getElementById("reto-msg");
+const stopRetoModal   = document.getElementById("stop-reto-modal");
+const btnCancelStop   = document.getElementById("btn-cancel-stop");
+const btnConfirmStop  = document.getElementById("btn-confirm-stop");
 let timerInterval    = null;
 let retoStartedAt    = null;
 const btnEnable     = document.getElementById("btn-enable");
@@ -203,9 +206,29 @@ adminKeyInput.addEventListener("keydown", e => { if (e.key === "Enter") loadConf
 btnRetoToggle.addEventListener("click", () => {
   const currentlyActive = btnRetoToggle.dataset.current === "1";
   if (currentlyActive) {
-    if (!confirm("¿Seguro que quieres detener el reto? Los estudiantes dejarán de poder enviar.")) return;
+    stopRetoModal.hidden        = false;
+    stopRetoModal.style.display = "flex";
+  } else {
+    toggleReto(true);
   }
-  toggleReto(!currentlyActive);
+});
+
+btnCancelStop.addEventListener("click", () => {
+  stopRetoModal.hidden        = true;
+  stopRetoModal.style.display = "none";
+});
+
+btnConfirmStop.addEventListener("click", () => {
+  stopRetoModal.hidden        = true;
+  stopRetoModal.style.display = "none";
+  toggleReto(false);
+});
+
+stopRetoModal.addEventListener("click", (e) => {
+  if (e.target === stopRetoModal) {
+    stopRetoModal.hidden        = true;
+    stopRetoModal.style.display = "none";
+  }
 });
 btnEnable.addEventListener("click",    () => toggleWhitelist(true));
 btnDisable.addEventListener("click",   () => toggleWhitelist(false));
