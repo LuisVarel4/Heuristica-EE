@@ -260,7 +260,8 @@ tr.top-3 td {
   text-align: center;
 }
 
-.cooldown-msg {
+.cooldown-msg,
+.param-warn {
   color: var(--warn);
   font-size: 0.9rem;
 }

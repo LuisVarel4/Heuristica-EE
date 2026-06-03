@@ -21,6 +21,11 @@ let refreshCooldownTimer = null;
 let refreshAvailableAt = 0;
 let autoRefreshTimer = null;
 const DECIMALS = 12;
+const MAX_MU_POR_GENERACIONES = 10000;
+
+const muInput = document.getElementById("mu");
+const generacionesInput = document.getElementById("generaciones");
+const paramWarn = document.getElementById("param-warn");
 
 function loadStoredEmail() {
   const saved = localStorage.getItem(EMAIL_KEY);
@@ -58,8 +63,38 @@ function setStoredCooldown(email, nextSubmitAt) {
 }
 
 function setSubmitCooldown(active, leftSeconds) {
-  submitBtn.disabled = active;
+  submitBtn.disabled = active || !isParamProductWithinLimit();
   submitBtn.textContent = active ? `Esperar (${leftSeconds}s)` : "Ejecutar y enviar";
+}
+
+function getParamProduct() {
+  const mu = Number(muInput.value);
+  const generaciones = Number(generacionesInput.value);
+  if (!Number.isInteger(mu) || !Number.isInteger(generaciones) || mu < 1 || generaciones < 1) {
+    return null;
+  }
+  return mu * generaciones;
+}
+
+function isParamProductWithinLimit() {
+  const product = getParamProduct();
+  if (product === null) return true;
+  return product <= MAX_MU_POR_GENERACIONES;
+}
+
+function updateParamLimitWarning() {
+  const product = getParamProduct();
+  if (product === null || product <= MAX_MU_POR_GENERACIONES) {
+    paramWarn.hidden = true;
+  } else {
+    paramWarn.hidden = false;
+    paramWarn.textContent =
+      `μ × generaciones debe ser ≤ ${MAX_MU_POR_GENERACIONES.toLocaleString("es-CO")}. ` +
+      `Valor actual: ${product.toLocaleString("es-CO")}. Ajusta μ o generaciones antes de enviar.`;
+  }
+  if (!cooldownTimer) {
+    submitBtn.disabled = !isParamProductWithinLimit();
+  }
 }
 
 function clearCooldownUi() {
@@ -253,9 +288,9 @@ form.addEventListener("submit", async (event) => {
 
   const email = emailInput.value.trim();
   const alias = aliasInput.value.trim();
-  const mu = Number(document.getElementById("mu").value);
+  const mu = Number(muInput.value);
   const sigma = Number(document.getElementById("sigma").value);
-  const generaciones = Number(document.getElementById("generaciones").value);
+  const generaciones = Number(generacionesInput.value);
 
   if (!email) {
     showError("Ingresa tu correo.");
@@ -279,6 +314,15 @@ form.addEventListener("submit", async (event) => {
   }
   if (!Number.isInteger(mu) || !Number.isInteger(generaciones)) {
     showError("μ y generaciones deben ser números enteros.");
+    return;
+  }
+  const producto = mu * generaciones;
+  if (producto > MAX_MU_POR_GENERACIONES) {
+    updateParamLimitWarning();
+    showError(
+      `μ × generaciones debe ser ≤ ${MAX_MU_POR_GENERACIONES.toLocaleString("es-CO")} ` +
+        `(actual: ${producto.toLocaleString("es-CO")}). Ajusta los parámetros antes de enviar.`
+    );
     return;
   }
   saveEmail(email);
@@ -308,7 +352,7 @@ form.addEventListener("submit", async (event) => {
       const msg = typeof data.detail === "string" ? data.detail : data.detail?.message || "Error al enviar";
       showError(msg);
       applyLocalCooldown();
-      if (!getStoredCooldown()) submitBtn.disabled = false;
+      if (!getStoredCooldown()) updateParamLimitWarning();
       return;
     }
 
@@ -325,7 +369,7 @@ form.addEventListener("submit", async (event) => {
     await loadLeaderboard();
   } catch {
     showError("Error de red. Intenta de nuevo.");
-    if (!cooldownTimer) submitBtn.disabled = false;
+    if (!cooldownTimer) updateParamLimitWarning();
   }
 });
 
@@ -345,6 +389,16 @@ aliasInput.addEventListener("input", () => {
   saveAlias(aliasInput.value);
 });
 
+function onParamInput() {
+  hideMessages();
+  updateParamLimitWarning();
+}
+
+muInput.addEventListener("input", onParamInput);
+muInput.addEventListener("change", onParamInput);
+generacionesInput.addEventListener("input", onParamInput);
+generacionesInput.addEventListener("change", onParamInput);
+
 refreshBtn.addEventListener("click", async () => {
   if (isRefreshOnCooldown()) return;
   await loadLeaderboard();
@@ -352,6 +406,7 @@ refreshBtn.addEventListener("click", async () => {
 });
 
 loadStoredEmail();
+updateParamLimitWarning();
 applyLocalCooldown();
 applyStoredRefreshCooldown();
 syncCooldownFromServer(emailInput.value);
