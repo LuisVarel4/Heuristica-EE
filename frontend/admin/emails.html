@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — Correos habilitados</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .key-gate { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+      .key-gate input { flex: 1; }
+      .row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+      .row input { flex: 1; }
+      .badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px;
+               font-size: 0.75rem; font-weight: 600; }
+      .badge-found   { background: #1a5c2a; color: #6effa0; }
+      .badge-missing { background: #5c1a1a; color: #ffaaaa; }
+      .email-list { list-style: none; padding: 0; margin: 0; }
+      .email-list li { padding: 0.4rem 0.5rem; border-bottom: 1px solid #1e3a5f;
+                       font-size: 0.9rem; display: flex; justify-content: space-between; }
+      .email-list li.highlight { background: #1a3a5c; border-radius: 4px; }
+      .date { color: #8fa8be; font-size: 0.75rem; white-space: nowrap; }
+      .back-link { display: inline-block; margin-bottom: 1rem; color: #8fa8be;
+                   font-size: 0.85rem; text-decoration: none; }
+      .back-link:hover { color: #cfe2f3; }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <header>
+        <h1>Correos habilitados</h1>
+        <p class="subtitle">Vista privada — no proyectar.</p>
+      </header>
+
+      <section class="card">
+        <div class="key-gate">
+          <input type="password" id="admin-key" placeholder="Admin key" />
+          <button id="load-btn">Cargar</button>
+        </div>
+        <p id="auth-error" class="error" hidden></p>
+      </section>
+
+      <div id="panel" hidden>
+        <a href="/admin" class="back-link">← Volver al panel principal</a>
+
+        <!-- Agregar -->
+        <section class="card">
+          <h2>Agregar correo</h2>
+          <div class="row">
+            <input type="email" id="new-email" placeholder="correo@unal.edu.co" />
+            <button id="btn-add">Agregar</button>
+          </div>
+          <p id="add-msg" style="font-size:0.85rem" hidden></p>
+        </section>
+
+        <!-- Lista con filtro -->
+        <section class="card" style="margin-top:1.25rem">
+          <h2>Lista (<span id="count-shown">0</span> / <span id="count-total">0</span>)</h2>
+          <div style="margin-bottom:0.75rem">
+            <input type="text" id="filter-input" placeholder="Filtrar por correo…"
+                   style="width:100%;box-sizing:border-box" />
+          </div>
+          <ul id="email-list" class="email-list"></ul>
+        </section>
+      </div>
+    </main>
+    <script src="/admin/emails.js"></script>
+  </body>
+</html>

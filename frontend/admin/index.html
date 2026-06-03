@@ -10,44 +10,62 @@
       @media (max-width: 700px) { .admin-grid { grid-template-columns: 1fr; } }
       .toggle-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
       .badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
-      .badge-on  { background: #1a5c2a; color: #6effa0; }
-      .badge-off { background: #5c1a1a; color: #ffaaaa; }
+      .badge-on      { background: #1a5c2a; color: #6effa0; }
+      .badge-off     { background: #5c1a1a; color: #ffaaaa; }
       .badge-found   { background: #1a5c2a; color: #6effa0; }
       .badge-missing { background: #5c1a1a; color: #ffaaaa; }
-      .email-list { max-height: 300px; overflow-y: auto; font-size: 0.85rem; }
-      .email-list li { padding: 0.25rem 0; border-bottom: 1px solid #1e3a5f; }
-      .email-list li.highlight { background: #1a3a5c; border-radius: 4px; padding-left: 6px; }
       .key-gate { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
       .key-gate input { flex: 1; }
-      .search-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
-      .search-row input { flex: 1; }
+      .row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+      .row input { flex: 1; }
+      .nav-btn { display: inline-block; margin-top: 1rem; padding: 0.5rem 1.2rem;
+                 background: #1e3a5f; color: #cfe2f3; border-radius: 6px;
+                 text-decoration: none; font-size: 0.9rem; border: 1px solid #2e5a8f; }
+      .nav-btn:hover { background: #2e5a8f; }
+      .stat { font-size: 1.8rem; font-weight: 700; color: #f0a500; }
     </style>
   </head>
   <body>
     <main class="layout">
       <header>
-        <h1>Panel de configuración — Admin</h1>
+        <h1>Panel de administración</h1>
         <p class="subtitle">No compartir este enlace.</p>
       </header>
 
+      <!-- Autenticación -->
       <section class="card">
         <h2>Autenticación</h2>
         <div class="key-gate">
           <input type="password" id="admin-key" placeholder="Admin key" />
-          <button id="load-btn">Cargar configuración</button>
+          <button id="load-btn">Entrar</button>
         </div>
         <p id="auth-error" class="error" hidden></p>
       </section>
 
       <div id="config-panel" hidden>
-        <div class="admin-grid">
+
+        <!-- Accesos rápidos -->
+        <section class="card">
+          <h2>Accesos rápidos</h2>
+          <a id="link-leaderboard" href="#" class="nav-btn" target="_blank">
+            📊 Ver leaderboard completo (con correos)
+          </a>
+          <a id="link-emails" href="#" class="nav-btn" target="_blank" style="margin-left:0.75rem">
+            📋 Ver lista de correos habilitados
+          </a>
+        </section>
+
+        <div class="admin-grid" style="margin-top:1.5rem">
 
           <!-- Toggle whitelist -->
           <section class="card">
             <h2>Lista blanca</h2>
             <div class="toggle-row">
-              <span>Estado actual:</span>
+              <span>Estado:</span>
               <span id="wl-badge" class="badge">…</span>
+              <span style="color:#8fa8be;font-size:0.85rem">
+                (<span id="wl-count">0</span> correos registrados)
+              </span>
             </div>
             <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:1rem">
               Si está <strong>desactivada</strong>, cualquier correo
@@ -66,34 +84,28 @@
             <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:1rem">
               Usa esto si un estudiante tiene un correo que no quedó en la lista inicial.
             </p>
-            <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
-              <input type="email" id="new-email" placeholder="correo@unal.edu.co" style="flex:1" />
+            <div class="row">
+              <input type="email" id="new-email" placeholder="correo@unal.edu.co" />
               <button id="btn-add">Agregar</button>
             </div>
             <p id="add-msg" style="font-size:0.85rem" hidden></p>
           </section>
         </div>
 
-        <!-- Buscador -->
+        <!-- Buscador (consulta al servidor, no expone la lista) -->
         <section class="card" style="margin-top:1.5rem">
-          <h2>Buscar correo en la lista</h2>
-          <div class="search-row">
+          <h2>Verificar correo</h2>
+          <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:0.75rem">
+            Comprueba si un correo específico está habilitado para participar.
+          </p>
+          <div class="row">
             <input type="email" id="search-input" placeholder="correo@unal.edu.co" />
-            <button id="btn-search">Buscar</button>
+            <button id="btn-search">Verificar</button>
           </div>
-          <p id="search-result" style="font-size:0.9rem;margin-top:0.5rem" hidden></p>
+          <p id="search-result" style="font-size:0.9rem;margin-top:0.6rem" hidden></p>
         </section>
 
-        <!-- Lista de correos -->
-        <section class="card" style="margin-top:1.5rem">
-          <h2>Correos en la lista blanca (<span id="wl-count">0</span>)</h2>
-          <div style="margin-bottom:0.75rem">
-            <input type="text" id="filter-input" placeholder="Filtrar lista…" style="width:100%;box-sizing:border-box" />
-          </div>
-          <ul id="wl-list" class="email-list"></ul>
-        </section>
       </div>
-
     </main>
     <script src="/admin/admin.js"></script>
   </body>

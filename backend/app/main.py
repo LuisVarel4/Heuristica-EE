@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.algorithm import AlgorithmServiceError, run_algorithm
 from app.config import settings
-from app.email_rules import normalize_unal_email
+from app.email_rules import normalize_unal_email  # noqa: F401 (also used in search endpoint)
 from app.db import (
     add_to_whitelist,
     fetch_leaderboard,
@@ -185,15 +185,40 @@ def leaderboard_admin(
 
 @app.get("/admin/config", response_model=ConfigResponse, include_in_schema=False)
 def admin_get_config(key: str | None = Query(None, max_length=128)) -> ConfigResponse:
-    """Retorna el estado actual de la lista blanca y los correos registrados."""
+    """Retorna el estado de la lista blanca y el total de correos (sin exponerlos)."""
     _check_admin_key(key)
     with get_db() as conn:
         enabled = is_whitelist_enabled(conn)
         rows = list_whitelist(conn)
     return ConfigResponse(
         whitelist_enabled=enabled,
-        whitelist=[WhitelistEntry(email=r["email"], added_at=r["added_at"]) for r in rows],
+        whitelist_count=len(rows),
     )
+
+
+@app.get("/admin/config/emails", include_in_schema=False)
+def admin_list_emails(key: str | None = Query(None, max_length=128)) -> dict:
+    """Retorna la lista completa de correos. Solo para uso en /admin/emails."""
+    _check_admin_key(key)
+    with get_db() as conn:
+        rows = list_whitelist(conn)
+    return {"emails": [{"email": r["email"], "added_at": r["added_at"]} for r in rows]}
+
+
+@app.get("/admin/config/search", include_in_schema=False)
+def admin_search_email(
+    email: str = Query(..., min_length=3, max_length=254),
+    key: str | None = Query(None, max_length=128),
+) -> dict:
+    """Verifica si un correo específico está en la lista blanca."""
+    _check_admin_key(key)
+    try:
+        normalized = normalize_unal_email(email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    with get_db() as conn:
+        found = is_email_whitelisted(conn, normalized)
+    return {"email": normalized, "in_whitelist": found}
 
 
 @app.post("/admin/config/whitelist", include_in_schema=False)
@@ -227,6 +252,14 @@ def pagina_resultados_ocultos() -> FileResponse:
     path = _frontend / "resultados" / "ocultos.html"
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Admin page not found")
+    return FileResponse(path)
+
+
+@app.get("/admin/emails", include_in_schema=False)
+def pagina_admin_emails() -> FileResponse:
+    path = _frontend / "admin" / "emails.html"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Not found")
     return FileResponse(path)
 
 

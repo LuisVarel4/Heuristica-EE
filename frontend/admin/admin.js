@@ -1,24 +1,22 @@
 const API = "";
 
-const adminKeyInput  = document.getElementById("admin-key");
-const loadBtn        = document.getElementById("load-btn");
-const authError      = document.getElementById("auth-error");
-const configPanel    = document.getElementById("config-panel");
-const wlBadge        = document.getElementById("wl-badge");
-const wlCount        = document.getElementById("wl-count");
-const wlList         = document.getElementById("wl-list");
-const btnEnable      = document.getElementById("btn-enable");
-const btnDisable     = document.getElementById("btn-disable");
-const toggleMsg      = document.getElementById("toggle-msg");
-const newEmailInput  = document.getElementById("new-email");
-const btnAdd         = document.getElementById("btn-add");
-const addMsg         = document.getElementById("add-msg");
-const searchInput    = document.getElementById("search-input");
-const btnSearch      = document.getElementById("btn-search");
-const searchResult   = document.getElementById("search-result");
-const filterInput    = document.getElementById("filter-input");
-
-let allEntries = [];   // cache de la lista completa para filtrar en el cliente
+const adminKeyInput = document.getElementById("admin-key");
+const loadBtn       = document.getElementById("load-btn");
+const authError     = document.getElementById("auth-error");
+const configPanel   = document.getElementById("config-panel");
+const wlBadge       = document.getElementById("wl-badge");
+const wlCount       = document.getElementById("wl-count");
+const btnEnable     = document.getElementById("btn-enable");
+const btnDisable    = document.getElementById("btn-disable");
+const toggleMsg     = document.getElementById("toggle-msg");
+const newEmailInput = document.getElementById("new-email");
+const btnAdd        = document.getElementById("btn-add");
+const addMsg        = document.getElementById("add-msg");
+const searchInput   = document.getElementById("search-input");
+const btnSearch     = document.getElementById("btn-search");
+const searchResult  = document.getElementById("search-result");
+const linkLeaderboard = document.getElementById("link-leaderboard");
+const linkEmails      = document.getElementById("link-emails");
 
 function getKey() {
   return adminKeyInput.value.trim();
@@ -27,28 +25,6 @@ function getKey() {
 function renderBadge(enabled) {
   wlBadge.textContent = enabled ? "ACTIVA" : "DESACTIVADA";
   wlBadge.className   = "badge " + (enabled ? "badge-on" : "badge-off");
-}
-
-function renderList(entries, highlight = "") {
-  const term = highlight.trim().toLowerCase();
-  wlCount.textContent = entries.length;
-  wlList.innerHTML = entries
-    .map((e) => {
-      const isMatch = term && e.email.toLowerCase().includes(term);
-      return `<li class="${isMatch ? "highlight" : ""}">
-        ${e.email}
-        <span style="color:#8fa8be;font-size:0.75rem">${e.added_at.slice(0, 10)}</span>
-      </li>`;
-    })
-    .join("");
-}
-
-function applyFilter() {
-  const term = filterInput.value.trim().toLowerCase();
-  const filtered = term
-    ? allEntries.filter((e) => e.email.toLowerCase().includes(term))
-    : allEntries;
-  renderList(filtered);
 }
 
 async function loadConfig() {
@@ -66,10 +42,13 @@ async function loadConfig() {
     return;
   }
   const data = await res.json();
-  allEntries = data.whitelist;
   configPanel.hidden = false;
   renderBadge(data.whitelist_enabled);
-  renderList(allEntries);
+  wlCount.textContent = data.whitelist_count;
+
+  // Actualizar enlaces con la key ya incluida
+  linkLeaderboard.href = `/resultados/ocultos?key=${encodeURIComponent(getKey())}`;
+  linkEmails.href      = `/admin/emails?key=${encodeURIComponent(getKey())}`;
 }
 
 async function toggleWhitelist(enabled) {
@@ -90,7 +69,7 @@ async function toggleWhitelist(enabled) {
     return;
   }
   renderBadge(data.whitelist_enabled);
-  toggleMsg.textContent = `Lista blanca ${data.whitelist_enabled ? "activada" : "desactivada"} correctamente.`;
+  toggleMsg.textContent = `Lista blanca ${data.whitelist_enabled ? "activada" : "desactivada"}.`;
   toggleMsg.style.color = "#6effa0";
   toggleMsg.hidden = false;
 }
@@ -118,26 +97,42 @@ async function addEmail() {
   addMsg.style.color = "#6effa0";
   addMsg.hidden = false;
   newEmailInput.value = "";
-  await loadConfig();
+  await loadConfig();  // refresca el conteo
 }
 
-function searchEmail() {
-  const term = searchInput.value.trim().toLowerCase();
-  if (!term) return;
+async function searchEmail() {
+  searchResult.hidden = true;
+  const email = searchInput.value.trim();
+  if (!email) return;
 
-  const found = allEntries.find((e) => e.email.toLowerCase() === term);
+  const params = new URLSearchParams({ email, key: getKey() });
+  const res = await fetch(`${API}/admin/config/search?${params}`);
+  const data = await res.json().catch(() => ({}));
+
   searchResult.hidden = false;
+  if (res.status === 403) {
+    searchResult.innerHTML = `<span class="badge badge-missing">Sin acceso</span> Admin key incorrecta.`;
+    return;
+  }
+  if (res.status === 400) {
+    searchResult.innerHTML = `<span class="badge badge-missing">Error</span> ${data.detail || "Correo inválido."}`;
+    return;
+  }
+  if (!res.ok) {
+    searchResult.innerHTML = `<span class="badge badge-missing">Error</span> No se pudo verificar.`;
+    return;
+  }
 
-  if (found) {
+  if (data.in_whitelist) {
     searchResult.innerHTML =
-      `<span class="badge badge-found">✓ En la lista</span>  ${found.email} — agregado el ${found.added_at.slice(0, 10)}`;
+      `<span class="badge badge-found">✓ Habilitado</span>  ${data.email} está en la lista.`;
   } else {
     searchResult.innerHTML =
-      `<span class="badge badge-missing">✗ No está en la lista</span>  "${searchInput.value.trim()}"`;
+      `<span class="badge badge-missing">✗ No habilitado</span>  ${data.email} no está en la lista.`;
   }
 }
 
-// ── Eventos ────────────────────────────────────────────────────────────────
+// ── Eventos ──────────────────────────────────────────────────────────────
 loadBtn.addEventListener("click", loadConfig);
 adminKeyInput.addEventListener("keydown", (e) => { if (e.key === "Enter") loadConfig(); });
 
@@ -149,5 +144,3 @@ newEmailInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addEma
 
 btnSearch.addEventListener("click", searchEmail);
 searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchEmail(); });
-
-filterInput.addEventListener("input", applyFilter);
