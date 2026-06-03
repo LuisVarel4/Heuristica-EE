@@ -131,9 +131,31 @@ def _seed_settings(conn: sqlite3.Connection) -> None:
     conn.execute(
         "INSERT OR IGNORE INTO app_settings (key, value) VALUES ('reto_enabled', '0')"
     )
+    conn.execute(
+        "INSERT OR IGNORE INTO app_settings (key, value) VALUES ('cooldown_seconds', '30')"
+    )
 
 
 # ── Whitelist helpers ────────────────────────────────────────────────────
+
+
+def get_cooldown_seconds(conn: sqlite3.Connection, default: int = 30) -> int:
+    row = conn.execute(
+        "SELECT value FROM app_settings WHERE key = 'cooldown_seconds'"
+    ).fetchone()
+    if row is None:
+        return default
+    try:
+        return max(0, int(row["value"]))
+    except (ValueError, TypeError):
+        return default
+
+
+def set_cooldown_seconds(conn: sqlite3.Connection, seconds: int) -> None:
+    conn.execute(
+        "INSERT OR REPLACE INTO app_settings (key, value) VALUES ('cooldown_seconds', ?)",
+        (str(max(0, seconds)),),
+    )
 
 
 def is_reto_enabled(conn: sqlite3.Connection) -> bool:

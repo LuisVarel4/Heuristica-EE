@@ -135,6 +135,20 @@
 
         <div class="admin-grid" style="margin-top:1.5rem">
 
+          <!-- Cooldown -->
+          <section class="card">
+            <h2>Cooldown entre envíos</h2>
+            <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:0.75rem">
+              Tiempo mínimo (en segundos) que cada estudiante debe esperar entre intentos.
+            </p>
+            <div class="row">
+              <input type="number" id="cooldown-input" min="0" max="3600" step="1"
+                     placeholder="segundos" style="width:100px;flex:none" />
+              <button id="btn-cooldown">Guardar</button>
+            </div>
+            <p id="cooldown-msg" style="margin-top:0.6rem;font-size:0.85rem" hidden></p>
+          </section>
+
           <!-- Toggle whitelist -->
           <section class="card">
             <h2>Lista blanca</h2>

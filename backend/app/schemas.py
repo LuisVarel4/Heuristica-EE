@@ -88,6 +88,11 @@ class ConfigResponse(BaseModel):
     whitelist_count: int
     reto_enabled: bool
     reto_started_at: str | None = None
+    cooldown_seconds: int = 30
+
+
+class SetCooldownRequest(BaseModel):
+    seconds: int = Field(ge=0, le=3600)
 
 
 class AddEmailRequest(BaseModel):

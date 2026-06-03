@@ -399,7 +399,8 @@ form.addEventListener("submit", async (event) => {
         setStoredCooldown(email, next);
         showCooldown(detail.remaining_seconds ?? 30, next);
       }
-      showError("Debes esperar 30 segundos entre envíos.");
+      const wait = detail.remaining_seconds ?? "unos";
+      showError(`Debes esperar ${wait}s antes de enviar de nuevo.`);
       return;
     }
 

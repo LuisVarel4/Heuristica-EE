@@ -19,6 +19,9 @@ const btnCancelStop   = document.getElementById("btn-cancel-stop");
 const btnConfirmStop  = document.getElementById("btn-confirm-stop");
 let timerInterval    = null;
 let retoStartedAt    = null;
+const cooldownInput = document.getElementById("cooldown-input");
+const btnCooldown   = document.getElementById("btn-cooldown");
+const cooldownMsg   = document.getElementById("cooldown-msg");
 const btnEnable     = document.getElementById("btn-enable");
 const btnDisable    = document.getElementById("btn-disable");
 const toggleMsg     = document.getElementById("toggle-msg");
@@ -103,6 +106,7 @@ async function loadConfig() {
   renderRetoBadge(data.reto_enabled, data.reto_started_at);
   renderBadge(data.whitelist_enabled);
   wlCount.textContent = data.whitelist_count;
+  cooldownInput.value = data.cooldown_seconds ?? 30;
 }
 
 async function toggleReto(enabled) {
@@ -230,6 +234,31 @@ stopRetoModal.addEventListener("click", (e) => {
     stopRetoModal.style.display = "none";
   }
 });
+btnCooldown.addEventListener("click", async () => {
+  cooldownMsg.hidden = true;
+  const seconds = parseInt(cooldownInput.value, 10);
+  if (isNaN(seconds) || seconds < 0 || seconds > 3600) {
+    cooldownMsg.textContent = "Valor inválido (0–3600 segundos).";
+    cooldownMsg.style.color = "#ff8888";
+    cooldownMsg.hidden = false;
+    return;
+  }
+  const res = await fetch(
+    `${API}/admin/config/cooldown?key=${encodeURIComponent(getKey())}`,
+    { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seconds }) }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    cooldownMsg.textContent = data.detail || "Error al guardar.";
+    cooldownMsg.style.color = "#ff8888";
+  } else {
+    cooldownMsg.textContent = `✓ Cooldown actualizado a ${data.cooldown_seconds}s.`;
+    cooldownMsg.style.color = "#6effa0";
+  }
+  cooldownMsg.hidden = false;
+});
+
 btnEnable.addEventListener("click",    () => toggleWhitelist(true));
 btnDisable.addEventListener("click",   () => toggleWhitelist(false));
 btnSearch.addEventListener("click", searchEmail);

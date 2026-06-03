@@ -14,6 +14,7 @@ from app.db import (
     clear_submissions,
     fetch_leaderboard,
     get_best_fitness,
+    get_cooldown_seconds,
     get_db,
     get_history,
     get_last_submission_time,
@@ -27,6 +28,7 @@ from app.db import (
     list_whitelist,
     parse_iso,
     seconds_since,
+    set_cooldown_seconds,
     set_reto_enabled,
     set_whitelist_enabled,
 )
@@ -40,6 +42,7 @@ from app.schemas import (
     LeaderboardAdminResponse,
     LeaderboardEntry,
     LeaderboardResponse,
+    SetCooldownRequest,
     SubmitRequest,
     SubmitResponse,
     ToggleWhitelistRequest,
@@ -64,14 +67,15 @@ def cooldown_state(email: str) -> tuple[bool, int, str | None]:
     normalized = email.strip().lower()
     with get_db() as conn:
         last_at = get_last_submission_time(conn, normalized)
+        cooldown = get_cooldown_seconds(conn, settings.cooldown_seconds)
 
     if not last_at:
         return True, 0, None
 
     elapsed = seconds_since(last_at)
-    remaining = max(0, int(settings.cooldown_seconds - elapsed))
+    remaining = max(0, int(cooldown - elapsed))
     if remaining > 0:
-        next_dt = parse_iso(last_at) + timedelta(seconds=settings.cooldown_seconds)
+        next_dt = parse_iso(last_at) + timedelta(seconds=cooldown)
         if next_dt.tzinfo is None:
             next_dt = next_dt.replace(tzinfo=timezone.utc)
         return False, remaining, next_dt.isoformat()
@@ -230,12 +234,26 @@ def admin_get_config(key: str | None = Query(None, max_length=128)) -> ConfigRes
         rows       = list_whitelist(conn)
         reto       = is_reto_enabled(conn)
         started_at = get_reto_started_at(conn)
+        cooldown   = get_cooldown_seconds(conn, settings.cooldown_seconds)
     return ConfigResponse(
         whitelist_enabled=enabled,
         whitelist_count=len(rows),
         reto_enabled=reto,
         reto_started_at=started_at if reto else None,
+        cooldown_seconds=cooldown,
     )
+
+
+@app.post("/admin/config/cooldown", include_in_schema=False)
+def admin_set_cooldown(
+    body: SetCooldownRequest,
+    key: str | None = Query(None, max_length=128),
+) -> dict:
+    """Actualiza el cooldown entre envíos (en segundos)."""
+    _check_admin_key(key)
+    with get_db() as conn:
+        set_cooldown_seconds(conn, body.seconds)
+    return {"ok": True, "cooldown_seconds": body.seconds}
 
 
 @app.post("/admin/leaderboard/clear", include_in_schema=False)
@@ -388,11 +406,12 @@ async def submit(body: SubmitRequest) -> SubmitResponse:
         )
         row = conn.execute("SELECT created_at FROM submissions WHERE id = ?", (submission_id,)).fetchone()
         created_at = row["created_at"] if row else ""
+        cooldown = get_cooldown_seconds(conn, settings.cooldown_seconds)
 
     new_fitness = float(result["fitness"])
     is_new_best = previous_best is None or new_fitness < previous_best
 
-    next_submit = parse_iso(created_at) + timedelta(seconds=settings.cooldown_seconds)
+    next_submit = parse_iso(created_at) + timedelta(seconds=cooldown)
     if next_submit.tzinfo is None:
         next_submit = next_submit.replace(tzinfo=timezone.utc)
 
@@ -406,7 +425,7 @@ async def submit(body: SubmitRequest) -> SubmitResponse:
         solucion=result["solucion"],
         fitness=result["fitness"],
         created_at=created_at,
-        cooldown_seconds=settings.cooldown_seconds,
+        cooldown_seconds=cooldown,
         next_submit_at=next_submit.isoformat(),
         mensaje=result.get("mensaje"),
         is_new_best=is_new_best,
