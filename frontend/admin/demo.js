@@ -37,6 +37,13 @@ const statX       = document.getElementById("stat-x");
 const statFit     = document.getElementById("stat-fit");
 const statConv    = document.getElementById("stat-conv");
 
+const costTotal    = document.getElementById("cost-total");
+const costPressure = document.getElementById("cost-pressure");
+const costConv     = document.getElementById("cost-conv");
+const segUseful    = document.getElementById("seg-useful");
+const segWaste     = document.getElementById("seg-waste");
+const costNote     = document.getElementById("cost-note");
+
 const chartFit    = document.getElementById("chart-fit");
 const chartSigma  = document.getElementById("chart-sigma");
 const chartPop    = document.getElementById("chart-pop");
@@ -230,6 +237,44 @@ function renderCharts() {
   genLabel.textContent = `Gen ${run.history[gen].gen}`;
 }
 
+function updateCost(run) {
+  const p = lastData.params;
+  const G = p.generaciones, mu = p.mu, lam = p.lambda;
+
+  costTotal.innerHTML =
+    `${run.evals_total.toLocaleString("es-CO")} ` +
+    `<span style="font-size:0.78rem;color:var(--muted)">(${lam}/gen × ${G} gen)</span>`;
+
+  const survivalPct = Math.round((mu / lam) * 100);
+  costPressure.innerHTML =
+    `top ${survivalPct}% ` +
+    `<span style="font-size:0.78rem;color:var(--muted)">(${mu} de ${lam} hijos)</span>`;
+
+  if (run.gen_converged != null) {
+    const usefulPct = Math.round((run.gen_converged / G) * 100);
+    const wastePct = 100 - usefulPct;
+    segUseful.style.width = usefulPct + "%";
+    segUseful.style.background = "var(--ok)";
+    segWaste.style.width = wastePct + "%";
+    segWaste.style.background = "var(--warn)";
+    costConv.innerHTML = `gen ${run.gen_converged} <span class="pill pill-ok">✓</span>`;
+    const evalsWasted = (G - run.gen_converged) * lam;
+    costNote.textContent =
+      `Encontró el óptimo en la generación ${run.gen_converged}. ` +
+      `El ${wastePct}% de las evaluaciones (${evalsWasted.toLocaleString("es-CO")}) ` +
+      `se gastó después de converger: fuerza bruta con rendimientos decrecientes.`;
+  } else {
+    // No convergió: ninguna evaluación alcanzó el óptimo global.
+    segUseful.style.width = "0%";
+    segWaste.style.width = "100%";
+    segWaste.style.background = "var(--err)";
+    costConv.innerHTML = `<span class="pill pill-bad">no convergió</span>`;
+    costNote.textContent =
+      `No alcanzó el óptimo global. Con λ bajo respecto a μ falta presión selectiva ` +
+      `(sobrevive demasiada gente), la auto-adaptación de σ se degrada y el algoritmo se estanca.`;
+  }
+}
+
 function selectRun(i) {
   stopPlay();
   selectedRun = i;
@@ -241,6 +286,7 @@ function selectRun(i) {
   statConv.innerHTML = run.converged
     ? `<span class="pill pill-ok">✓ óptimo global</span>`
     : `<span class="pill pill-bad">✗ mínimo local</span>`;
+  updateCost(run);
   renderCharts();
 }
 

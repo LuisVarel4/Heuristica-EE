@@ -139,8 +139,20 @@ def ejecutar_demo(
         converged = (res["best_fitness"] - gf) <= fitness_tol
         if converged:
             exitos += 1
+
+        # Primera generación en la que se alcanzó el óptimo global.
+        gen_conv: int | None = None
+        for h in res["history"]:
+            if (h["best_fitness"] - gf) <= fitness_tol:
+                gen_conv = h["gen"]
+                break
+
         res["seed"] = s
         res["converged"] = converged
+        res["gen_converged"] = gen_conv
+        # Costo: cada generación evalúa f(x) en los λ hijos (+ μ iniciales).
+        res["evals_total"] = mu + generaciones * lam
+        res["evals_per_gen"] = lam
         corridas.append(res)
 
     return {

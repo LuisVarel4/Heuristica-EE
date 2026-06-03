@@ -42,6 +42,18 @@
               font-size:0.78rem; font-weight:600; }
       .pill-ok { background:#1a5c2a; color:#6effa0; }
       .pill-bad{ background:#5c1a1a; color:#ffaaaa; }
+      .cost-head { display:flex; flex-wrap:wrap; gap:1.75rem; margin-bottom:1rem; }
+      .cost-bar { display:flex; height:30px; border-radius:8px; overflow:hidden;
+                  background:#0d1117; border:1px solid var(--border); }
+      .cost-bar .seg { height:100%; transition: width 0.5s ease; min-width:0; }
+      .seg-useful { background: var(--ok); }
+      .seg-waste  { background: var(--warn); }
+      .cost-legend { display:flex; flex-wrap:wrap; gap:1.25rem; margin-top:0.6rem;
+                     font-size:0.78rem; color:var(--muted); }
+      .dot { display:inline-block; width:10px; height:10px; border-radius:50%;
+             margin-right:0.35rem; vertical-align:middle; }
+      .dot-useful { background: var(--ok); }
+      .dot-waste  { background: var(--warn); }
     </style>
   </head>
   <body>
@@ -117,6 +129,24 @@
               <div class="stat"><b>Mejor fitness</b><span id="stat-fit">—</span></div>
               <div class="stat"><b>Estado</b><span id="stat-conv">—</span></div>
             </div>
+          </section>
+
+          <section class="card" id="cost-card">
+            <h2>Costo computacional de la corrida</h2>
+            <div class="cost-head">
+              <div class="stat"><b>Evaluaciones de f(x)</b><span id="cost-total">—</span></div>
+              <div class="stat"><b>Presión selectiva (μ/λ)</b><span id="cost-pressure">—</span></div>
+              <div class="stat"><b>Convergencia</b><span id="cost-conv">—</span></div>
+            </div>
+            <div class="cost-bar">
+              <div class="seg seg-useful" id="seg-useful" style="width:0%"></div>
+              <div class="seg seg-waste"  id="seg-waste"  style="width:0%"></div>
+            </div>
+            <div class="cost-legend">
+              <span><i class="dot dot-useful"></i> Útil (evaluaciones hasta converger)</span>
+              <span><i class="dot dot-waste"></i> Desperdiciado (evaluaciones tras converger)</span>
+            </div>
+            <p class="chart-cap" id="cost-note"></p>
           </section>
 
           <div class="tables-grid">
