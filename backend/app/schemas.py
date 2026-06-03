@@ -100,3 +100,18 @@ class AddEmailRequest(BaseModel):
 
 class ToggleWhitelistRequest(BaseModel):
     enabled: bool
+
+
+class HistoryEntry(BaseModel):
+    mu: int
+    sigma: float
+    generaciones: int
+    solucion: float
+    fitness: float
+    created_at: str
+
+
+class HistoryResponse(BaseModel):
+    email: str
+    alias: str | None
+    entries: list[HistoryEntry]

@@ -87,33 +87,58 @@
         </form>
       </section>
 
-      <section class="card">
-        <div class="leaderboard-header">
-          <h2>Leaderboard</h2>
-          <button type="button" id="refresh-btn" class="secondary">Actualizar</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Alias</th>
-                <th>μ</th>
-                <th>σ</th>
-                <th>Gen.</th>
-                <th>Solución</th>
-                <th>Fitness</th>
-                <th>Hora (UTC−5)</th>
-              </tr>
-            </thead>
-            <tbody id="leaderboard-body">
-              <tr>
-                <td colspan="8" class="muted">Cargando…</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div class="tables-grid">
+        <!-- Leaderboard general -->
+        <section class="card">
+          <div class="leaderboard-header">
+            <h2>Leaderboard</h2>
+            <button type="button" id="refresh-btn" class="secondary">Actualizar</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Alias</th>
+                  <th>μ</th>
+                  <th>σ</th>
+                  <th>Gen.</th>
+                  <th>Solución</th>
+                  <th>Fitness</th>
+                  <th>Hora (UTC−5)</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboard-body">
+                <tr><td colspan="8" class="muted">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Historial personal -->
+        <section class="card" id="history-section" hidden>
+          <h2>Mis intentos</h2>
+          <p id="history-alias" class="muted" style="font-size:0.85rem;margin-bottom:0.5rem"></p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>μ</th>
+                  <th>σ</th>
+                  <th>Gen.</th>
+                  <th>Solución</th>
+                  <th>Fitness</th>
+                  <th>Hora (UTC−5)</th>
+                </tr>
+              </thead>
+              <tbody id="history-body">
+                <tr><td colspan="7" class="muted">Sin intentos aún</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </main>
     <script src="app.js"></script>
   </body>

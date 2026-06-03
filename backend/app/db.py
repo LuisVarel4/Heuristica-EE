@@ -242,6 +242,28 @@ def insert_submission(
     return int(cursor.lastrowid)
 
 
+def get_registered_alias(conn: sqlite3.Connection, email: str) -> str | None:
+    """Retorna el alias del primer envío del correo, o None si no ha enviado aún."""
+    row = conn.execute(
+        "SELECT alias FROM submissions WHERE email = ? ORDER BY created_at ASC LIMIT 1",
+        (email.strip().lower(),),
+    ).fetchone()
+    return row["alias"] if row else None
+
+
+def get_history(conn: sqlite3.Connection, email: str) -> list[sqlite3.Row]:
+    """Retorna todos los envíos del correo ordenados de mejor a peor fitness."""
+    return conn.execute(
+        """
+        SELECT mu, sigma, generaciones, solucion, fitness, created_at
+        FROM submissions
+        WHERE email = ?
+        ORDER BY fitness ASC, created_at ASC
+        """,
+        (email.strip().lower(),),
+    ).fetchall()
+
+
 def get_best_fitness(conn: sqlite3.Connection, email: str) -> float | None:
     row = conn.execute(
         "SELECT MIN(fitness) AS best FROM submissions WHERE email = ?",

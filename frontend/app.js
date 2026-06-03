@@ -15,6 +15,9 @@ const formError = document.getElementById("form-error");
 const formSuccess = document.getElementById("form-success");
 const leaderboardBody = document.getElementById("leaderboard-body");
 const refreshBtn = document.getElementById("refresh-btn");
+const historySection = document.getElementById("history-section");
+const historyBody = document.getElementById("history-body");
+const historyAlias = document.getElementById("history-alias");
 
 let cooldownTimer = null;
 let refreshCooldownTimer = null;
@@ -263,9 +266,14 @@ async function loadLeaderboard() {
     }
     leaderboardBody.innerHTML = data.entries
       .map((row) => {
-        const rankClass = row.rank <= 3 ? `top-${row.rank}` : "";
+        const rankClass  = row.rank <= 3 ? `top-${row.rank}` : "";
+        const isMe       = viewer && row.alias !== "—" &&
+                           formatParam(row.mu) !== "—";  // viewer_email expone params solo al dueño
+        // Detectamos fila propia: el backend solo muestra params al dueño
+        const myRow = viewer && row.mu !== null && row.mu !== undefined &&
+                      formatParam(row.mu) !== "—" ? "my-row" : "";
         return `
-          <tr class="${rankClass}">
+          <tr class="${rankClass} ${myRow}">
             <td class="rank-cell">${formatRank(row.rank)}</td>
             <td>${row.alias}</td>
             <td>${formatParam(row.mu)}</td>
@@ -280,6 +288,47 @@ async function loadLeaderboard() {
   } catch (err) {
     leaderboardBody.innerHTML = `<tr><td colspan="8" class="muted">${err.message}</td></tr>`;
   }
+}
+
+async function loadHistory() {
+  const email = emailInput.value.trim();
+  if (!email) return;
+  try {
+    const params = new URLSearchParams({ email });
+    const res = await fetch(`${API}/api/history?${params}`);
+    if (!res.ok) return;
+    const data = await res.json();
+
+    // Bloquear alias si ya tiene envíos
+    if (data.alias) {
+      aliasInput.value    = data.alias;
+      aliasInput.disabled = true;
+      aliasInput.title    = "El alias queda fijo con tu primer envío.";
+      saveAlias(data.alias);
+    } else {
+      aliasInput.disabled = false;
+      aliasInput.title    = "";
+    }
+
+    if (!data.entries.length) {
+      historySection.hidden = true;
+      return;
+    }
+
+    historySection.hidden = false;
+    historyAlias.textContent = `Alias: ${data.alias || "—"}  ·  ${data.entries.length} intento(s)`;
+
+    historyBody.innerHTML = data.entries.map((row, i) => `
+      <tr class="${i === 0 ? "best-row" : ""}">
+        <td>${i + 1}</td>
+        <td>${row.mu}</td>
+        <td>${row.sigma}</td>
+        <td>${row.generaciones}</td>
+        <td>${formatDecimal(row.solucion)}</td>
+        <td>${formatDecimal(row.fitness)}</td>
+        <td>${formatTime(row.created_at)}</td>
+      </tr>`).join("");
+  } catch (_) { /* silencioso */ }
 }
 
 form.addEventListener("submit", async (event) => {
@@ -372,7 +421,7 @@ form.addEventListener("submit", async (event) => {
       successText += " — Envío guardado; en el leaderboard sigue tu mejor fitness anterior (menor = mejor).";
     }
     showSuccess(successText);
-    await loadLeaderboard();
+    await Promise.all([loadLeaderboard(), loadHistory()]);
   } catch {
     showError("Error de red. Intenta de nuevo.");
     if (!cooldownTimer) updateParamLimitWarning();
@@ -385,6 +434,7 @@ emailInput.addEventListener("change", () => {
   applyLocalCooldown();
   syncCooldownFromServer(emailInput.value);
   loadLeaderboard();
+  loadHistory();
 });
 
 emailInput.addEventListener("input", () => {
@@ -417,6 +467,7 @@ applyLocalCooldown();
 applyStoredRefreshCooldown();
 syncCooldownFromServer(emailInput.value);
 loadLeaderboard();
+loadHistory();
 autoRefreshTimer = setInterval(() => {
   if (!isRefreshOnCooldown()) loadLeaderboard();
 }, 15000);

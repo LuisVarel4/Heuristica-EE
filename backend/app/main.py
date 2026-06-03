@@ -15,7 +15,9 @@ from app.db import (
     fetch_leaderboard,
     get_best_fitness,
     get_db,
+    get_history,
     get_last_submission_time,
+    get_registered_alias,
     init_db,
     insert_submission,
     is_email_whitelisted,
@@ -31,6 +33,8 @@ from app.schemas import (
     AddEmailRequest,
     ConfigResponse,
     CooldownResponse,
+    HistoryEntry,
+    HistoryResponse,
     LeaderboardAdminEntry,
     LeaderboardAdminResponse,
     LeaderboardEntry,
@@ -153,6 +157,31 @@ def cooldown(email: str = Query(..., min_length=3, max_length=254)) -> CooldownR
         can_submit=can_submit,
         remaining_seconds=remaining,
         next_submit_at=next_at,
+    )
+
+
+@app.get("/api/history", response_model=HistoryResponse)
+def history(
+    email: str = Query(..., min_length=3, max_length=254),
+) -> HistoryResponse:
+    """Retorna todos los intentos del correo, ordenados de mejor a peor fitness."""
+    try:
+        normalized = normalize_unal_email(email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    with get_db() as conn:
+        rows  = get_history(conn, normalized)
+        alias = get_registered_alias(conn, normalized)
+    return HistoryResponse(
+        email=normalized,
+        alias=alias,
+        entries=[
+            HistoryEntry(
+                mu=r["mu"], sigma=r["sigma"], generaciones=r["generaciones"],
+                solucion=r["solucion"], fitness=r["fitness"], created_at=r["created_at"],
+            )
+            for r in rows
+        ],
     )
 
 
@@ -338,6 +367,10 @@ async def submit(body: SubmitRequest) -> SubmitResponse:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     with get_db() as conn:
+        # Alias bloqueado: siempre se usa el del primer envío si ya existe
+        registered_alias = get_registered_alias(conn, email)
+        final_alias = registered_alias if registered_alias is not None else body.alias
+
         previous_best = get_best_fitness(conn, email)
         submission_id = insert_submission(
             conn,
@@ -347,7 +380,7 @@ async def submit(body: SubmitRequest) -> SubmitResponse:
             generaciones=result["generaciones"],
             solucion=result["solucion"],
             fitness=result["fitness"],
-            alias=body.alias,
+            alias=final_alias,
         )
         row = conn.execute("SELECT created_at FROM submissions WHERE id = ?", (submission_id,)).fetchone()
         created_at = row["created_at"] if row else ""
@@ -362,7 +395,7 @@ async def submit(body: SubmitRequest) -> SubmitResponse:
     return SubmitResponse(
         id=submission_id,
         email=email,
-        alias=body.alias,
+        alias=final_alias,
         mu=result["mu"],
         sigma=result["sigma"],
         generaciones=result["generaciones"],
