@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heurística — Evolución (1+1)</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header>
+        <h1>Estrategia evolutiva (1+1)</h1>
+        <p class="subtitle">
+          Minimiza <code>f(x) = x²</code>. El leaderboard muestra solo la mejor solución por correo.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Enviar solución</h2>
+        <form id="submit-form" novalidate>
+          <label>
+            Correo institucional
+            <input type="email" id="email" name="email" required placeholder="estudiante@unal.edu.co" />
+          </label>
+
+          <div class="grid">
+            <label>
+              μ (tamaño población)
+              <input type="number" id="mu" name="mu" min="1" max="500" value="20" required />
+            </label>
+            <label>
+              σ (desviación mutación)
+              <input type="number" id="sigma" name="sigma" min="0.01" max="10" step="0.01" value="1" required />
+            </label>
+            <label>
+              Generaciones
+              <input type="number" id="generaciones" name="generaciones" min="1" max="500" value="50" required />
+            </label>
+          </div>
+
+          <p id="cooldown-msg" class="cooldown-msg" hidden></p>
+          <p id="form-error" class="error" hidden></p>
+          <p id="form-success" class="success" hidden></p>
+
+          <button type="submit" id="submit-btn">Ejecutar y enviar</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="leaderboard-header">
+          <h2>Leaderboard</h2>
+          <button type="button" id="refresh-btn" class="secondary">Actualizar</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Correo</th>
+                <th>μ</th>
+                <th>σ</th>
+                <th>Gen.</th>
+                <th>Solución</th>
+                <th>Fitness</th>
+                <th>Hora (UTC)</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <tr>
+                <td colspan="8" class="muted">Cargando…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
