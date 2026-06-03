@@ -88,7 +88,7 @@ function plotLines(canvas, { series, xLabel, yRef, yLog, guideZero }) {
   const sx = makeScale(xmin, xmax, padL, W - padR);
   const sy = makeScale(tymin, tymax, H - padB, padT);
 
-  ctx.font = "11px system-ui";
+  ctx.font = "13px system-ui";
   // Grid + etiquetas Y
   ctx.textBaseline = "middle"; ctx.textAlign = "right";
   for (let i = 0; i <= 5; i++) {
@@ -157,7 +157,7 @@ function plotPopulation(canvas, genData, globalX, showChildren) {
   const sy = makeScale(ymin - 0.5, ymax + 0.5, H - padB, padT);
 
   // Grid + ejes
-  ctx.font = "11px system-ui";
+  ctx.font = "13px system-ui";
   ctx.textBaseline = "middle"; ctx.textAlign = "right"; ctx.fillStyle = COLORS.muted;
   for (let i = 0; i <= 5; i++) {
     const yv = (ymin - 0.5) + (ymax - ymin + 1) * (i / 5);
@@ -243,12 +243,12 @@ function updateCost(run) {
 
   costTotal.innerHTML =
     `${run.evals_total.toLocaleString("es-CO")} ` +
-    `<span style="font-size:0.78rem;color:var(--muted)">(${lam}/gen × ${G} gen)</span>`;
+    `<span style="font-size:0.82rem;color:var(--muted)">(${lam}/gen × ${G} gen)</span>`;
 
   const survivalPct = Math.round((mu / lam) * 100);
   costPressure.innerHTML =
     `top ${survivalPct}% ` +
-    `<span style="font-size:0.78rem;color:var(--muted)">(${mu} de ${lam} hijos)</span>`;
+    `<span style="font-size:0.82rem;color:var(--muted)">(${mu} de ${lam} hijos)</span>`;
 
   if (run.gen_converged != null) {
     const usefulPct = Math.round((run.gen_converged / G) * 100);
@@ -296,7 +296,7 @@ function renderResults(data) {
   statGlobal.textContent = `x=${fmt(g.x)}  ·  f=${fmt(g.fitness)}`;
   const pct = Math.round(data.success_rate * 100);
   statSuccess.innerHTML =
-    `${pct}% <span style="font-size:0.8rem;color:var(--muted)">(${data.runs.filter(r=>r.converged).length}/${data.runs.length} corridas)</span>`;
+    `${pct}% <span style="font-size:0.82rem;color:var(--muted)">(${data.runs.filter(r=>r.converged).length}/${data.runs.length} corridas)</span>`;
 
   runSelect.innerHTML = data.runs
     .map((r, i) => `<option value="${i}">Corrida ${i + 1}${r.converged ? " ✓" : " ✗"}</option>`)
