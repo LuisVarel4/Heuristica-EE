@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin — Configuración</title>
+    <title>Admin — Panel</title>
     <link rel="stylesheet" href="/styles.css" />
     <style>
       .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
@@ -18,11 +18,10 @@
       .key-gate input { flex: 1; }
       .row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
       .row input { flex: 1; }
-      .nav-btn { display: inline-block; margin-top: 1rem; padding: 0.5rem 1.2rem;
-                 background: #1e3a5f; color: #cfe2f3; border-radius: 6px;
-                 text-decoration: none; font-size: 0.9rem; border: 1px solid #2e5a8f; }
+      .nav-btn { display: inline-block; padding: 0.5rem 1.2rem; background: #1e3a5f;
+                 color: #cfe2f3; border-radius: 6px; text-decoration: none;
+                 font-size: 0.9rem; border: 1px solid #2e5a8f; }
       .nav-btn:hover { background: #2e5a8f; }
-      .stat { font-size: 1.8rem; font-weight: 700; color: #f0a500; }
     </style>
   </head>
   <body>
@@ -47,11 +46,8 @@
         <!-- Accesos rápidos -->
         <section class="card">
           <h2>Accesos rápidos</h2>
-          <a id="link-leaderboard" href="#" class="nav-btn" target="_blank">
-            📊 Ver leaderboard completo (con correos)
-          </a>
-          <a id="link-emails" href="#" class="nav-btn" target="_blank" style="margin-left:0.75rem">
-            📋 Ver lista de correos habilitados
+          <a id="link-leaderboard" href="/resultados/ocultos" class="nav-btn" target="_blank">
+            📊 Leaderboard completo (con correos)
           </a>
         </section>
 
@@ -64,7 +60,7 @@
               <span>Estado:</span>
               <span id="wl-badge" class="badge">…</span>
               <span style="color:#8fa8be;font-size:0.85rem">
-                (<span id="wl-count">0</span> correos registrados)
+                (<span id="wl-count">0</span> correos)
               </span>
             </div>
             <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:1rem">
@@ -78,34 +74,25 @@
             <p id="toggle-msg" style="margin-top:0.75rem;font-size:0.85rem" hidden></p>
           </section>
 
-          <!-- Agregar correo -->
+          <!-- Verificar / Agregar (flujo unificado) -->
           <section class="card">
-            <h2>Agregar correo</h2>
-            <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:1rem">
-              Usa esto si un estudiante tiene un correo que no quedó en la lista inicial.
+            <h2>Verificar correo</h2>
+            <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:0.75rem">
+              Comprueba si está habilitado. Si no lo está, podrás agregarlo al instante.
             </p>
             <div class="row">
-              <input type="email" id="new-email" placeholder="correo@unal.edu.co" />
-              <button id="btn-add">Agregar</button>
+              <input type="email" id="search-input" placeholder="correo@unal.edu.co" />
+              <button id="btn-search">Verificar</button>
             </div>
-            <p id="add-msg" style="font-size:0.85rem" hidden></p>
+            <div id="search-result" style="margin-top:0.6rem;font-size:0.9rem" hidden>
+              <p id="search-msg"></p>
+              <button id="btn-add" hidden style="margin-top:0.5rem">+ Agregar a la lista</button>
+              <p id="add-msg" style="font-size:0.85rem;margin-top:0.4rem" hidden></p>
+            </div>
           </section>
         </div>
-
-        <!-- Buscador (consulta al servidor, no expone la lista) -->
-        <section class="card" style="margin-top:1.5rem">
-          <h2>Verificar correo</h2>
-          <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:0.75rem">
-            Comprueba si un correo específico está habilitado para participar.
-          </p>
-          <div class="row">
-            <input type="email" id="search-input" placeholder="correo@unal.edu.co" />
-            <button id="btn-search">Verificar</button>
-          </div>
-          <p id="search-result" style="font-size:0.9rem;margin-top:0.6rem" hidden></p>
-        </section>
-
       </div>
+
     </main>
     <script src="/admin/admin.js"></script>
   </body>

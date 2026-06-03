@@ -1,10 +1,15 @@
 const API = "";
-const ADMIN_KEY_STORAGE = "heuristica_admin_key";
+const SESSION_KEY = "heuristica_admin_key";
 const DECIMALS = 12;
 
-const leaderboardBody = document.getElementById("leaderboard-body");
-const refreshBtn = document.getElementById("refresh-btn");
-const adminError = document.getElementById("admin-error");
+const adminKeyInput    = document.getElementById("admin-key");
+const loadBtn          = document.getElementById("load-btn");
+const adminError       = document.getElementById("admin-error");
+const leaderboardPanel = document.getElementById("leaderboard-panel");
+const leaderboardBody  = document.getElementById("leaderboard-body");
+const refreshBtn       = document.getElementById("refresh-btn");
+
+function getKey() { return adminKeyInput.value.trim(); }
 
 function formatDecimal(value, digits = DECIMALS) {
   const n = Number(value);
@@ -18,18 +23,10 @@ function formatDecimal(value, digits = DECIMALS) {
 function formatTime(iso) {
   try {
     return new Date(iso).toLocaleString("es-CO", {
-      timeZone: "America/Bogota",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
+      timeZone: "America/Bogota", year: "numeric", month: "2-digit",
+      day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
     });
-  } catch {
-    return iso;
-  }
+  } catch { return iso; }
 }
 
 function formatRank(rank) {
@@ -39,69 +36,56 @@ function formatRank(rank) {
   return String(rank);
 }
 
-function getAdminKey() {
-  let key = sessionStorage.getItem(ADMIN_KEY_STORAGE);
-  if (!key) {
-    key = window.prompt("Clave de administrador (ADMIN_KEY en .env):") || "";
-    if (key) sessionStorage.setItem(ADMIN_KEY_STORAGE, key);
-  }
-  return key;
-}
-
-function showAdminError(message) {
-  adminError.textContent = message;
-  adminError.hidden = false;
-}
-
-function hideAdminError() {
-  adminError.hidden = true;
-}
-
 async function loadAdminLeaderboard() {
+  adminError.hidden = true;
   leaderboardBody.innerHTML = `<tr><td colspan="9" class="muted">Cargando…</td></tr>`;
-  hideAdminError();
 
-  const key = getAdminKey();
-  const params = new URLSearchParams({ _t: String(Date.now()) });
-  if (key) params.set("key", key);
+  const params = new URLSearchParams({ key: getKey(), _t: String(Date.now()) });
+  const res = await fetch(`${API}/api/leaderboard/admin?${params}`, { cache: "no-store" });
 
-  try {
-    const res = await fetch(`${API}/api/leaderboard/admin?${params}`, { cache: "no-store" });
-    if (res.status === 403) {
-      sessionStorage.removeItem(ADMIN_KEY_STORAGE);
-      showAdminError("Clave incorrecta. Recarga la página e intenta de nuevo.");
-      leaderboardBody.innerHTML = `<tr><td colspan="9" class="muted">Acceso denegado</td></tr>`;
-      return;
-    }
-    if (!res.ok) throw new Error("No se pudo cargar el leaderboard admin");
-
-    const data = await res.json();
-    if (!data.entries.length) {
-      leaderboardBody.innerHTML = `<tr><td colspan="9" class="muted">Sin envíos aún</td></tr>`;
-      return;
-    }
-
-    leaderboardBody.innerHTML = data.entries
-      .map((row) => {
-        const rankClass = row.rank <= 3 ? `top-${row.rank}` : "";
-        return `
-          <tr class="${rankClass}">
-            <td class="rank-cell">${formatRank(row.rank)}</td>
-            <td>${row.alias}</td>
-            <td>${row.email}</td>
-            <td>${row.mu}</td>
-            <td>${row.sigma}</td>
-            <td>${row.generaciones}</td>
-            <td>${formatDecimal(row.solucion)}</td>
-            <td>${formatDecimal(row.fitness)}</td>
-            <td>${formatTime(row.created_at)}</td>
-          </tr>`;
-      })
-      .join("");
-  } catch (err) {
-    leaderboardBody.innerHTML = `<tr><td colspan="9" class="muted">${err.message}</td></tr>`;
+  if (res.status === 403 || res.status === 503) {
+    adminError.textContent = res.status === 503
+      ? "Admin key no configurada en el servidor."
+      : "Admin key incorrecta.";
+    adminError.hidden = false;
+    leaderboardPanel.hidden = true;
+    sessionStorage.removeItem(SESSION_KEY);
+    return;
   }
+  if (!res.ok) {
+    adminError.textContent = "Error al cargar el leaderboard.";
+    adminError.hidden = false;
+    return;
+  }
+
+  sessionStorage.setItem(SESSION_KEY, getKey());
+  leaderboardPanel.hidden = false;
+
+  const data = await res.json();
+  if (!data.entries.length) {
+    leaderboardBody.innerHTML = `<tr><td colspan="9" class="muted">Sin envíos aún</td></tr>`;
+    return;
+  }
+  leaderboardBody.innerHTML = data.entries.map((row) => {
+    const rankClass = row.rank <= 3 ? `top-${row.rank}` : "";
+    return `<tr class="${rankClass}">
+      <td class="rank-cell">${formatRank(row.rank)}</td>
+      <td>${row.alias}</td>
+      <td>${row.email}</td>
+      <td>${row.mu}</td>
+      <td>${row.sigma}</td>
+      <td>${row.generaciones}</td>
+      <td>${formatDecimal(row.solucion)}</td>
+      <td>${formatDecimal(row.fitness)}</td>
+      <td>${formatTime(row.created_at)}</td>
+    </tr>`;
+  }).join("");
 }
 
+loadBtn.addEventListener("click", loadAdminLeaderboard);
+adminKeyInput.addEventListener("keydown", e => { if (e.key === "Enter") loadAdminLeaderboard(); });
 refreshBtn.addEventListener("click", loadAdminLeaderboard);
-loadAdminLeaderboard();
+
+// Restaurar sesión
+const saved = sessionStorage.getItem(SESSION_KEY);
+if (saved) { adminKeyInput.value = saved; loadAdminLeaderboard(); }

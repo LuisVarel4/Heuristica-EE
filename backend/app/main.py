@@ -83,7 +83,12 @@ def _display_alias(raw: str) -> str:
 
 
 def _check_admin_key(key: str | None) -> None:
-    if settings.admin_key and key != settings.admin_key:
+    if not settings.admin_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Admin key not configured. Set ADMIN_KEY in .env",
+        )
+    if key != settings.admin_key:
         raise HTTPException(status_code=403, detail="Invalid or missing admin key")
 
 

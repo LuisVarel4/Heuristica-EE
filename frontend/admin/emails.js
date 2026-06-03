@@ -1,4 +1,5 @@
 const API = "";
+const SESSION_KEY = "heuristica_admin_key";
 
 const adminKeyInput = document.getElementById("admin-key");
 const loadBtn       = document.getElementById("load-btn");
@@ -16,13 +17,13 @@ let allEmails = [];
 
 function getKey() { return adminKeyInput.value.trim(); }
 
-function renderList(entries) {
+function renderList() {
   const term = filterInput.value.trim().toLowerCase();
-  const filtered = term ? entries.filter(e => e.email.includes(term)) : entries;
+  const filtered = term ? allEmails.filter(e => e.email.includes(term)) : allEmails;
   countShown.textContent = filtered.length;
-  countTotal.textContent = entries.length;
+  countTotal.textContent = allEmails.length;
   emailList.innerHTML = filtered.map(e => `
-    <li class="${term && e.email.includes(term) ? "highlight" : ""}">
+    <li>
       <span>${e.email}</span>
       <span class="date">${e.added_at.slice(0, 10)}</span>
     </li>`).join("");
@@ -31,17 +32,21 @@ function renderList(entries) {
 async function loadEmails() {
   authError.hidden = true;
   const res = await fetch(`${API}/admin/config/emails?key=${encodeURIComponent(getKey())}`);
-  if (res.status === 403) {
-    authError.textContent = "Admin key incorrecta.";
+  if (res.status === 403 || res.status === 503) {
+    authError.textContent = res.status === 503
+      ? "Admin key no configurada en el servidor."
+      : "Admin key incorrecta.";
     authError.hidden = false;
     panel.hidden = true;
+    sessionStorage.removeItem(SESSION_KEY);
     return;
   }
   if (!res.ok) { authError.textContent = "Error al cargar."; authError.hidden = false; return; }
   const data = await res.json();
+  sessionStorage.setItem(SESSION_KEY, getKey());
   allEmails = data.emails;
   panel.hidden = false;
-  renderList(allEmails);
+  renderList();
 }
 
 async function addEmail() {
@@ -71,4 +76,8 @@ loadBtn.addEventListener("click", loadEmails);
 adminKeyInput.addEventListener("keydown", e => { if (e.key === "Enter") loadEmails(); });
 btnAdd.addEventListener("click", addEmail);
 newEmailInput.addEventListener("keydown", e => { if (e.key === "Enter") addEmail(); });
-filterInput.addEventListener("input", () => renderList(allEmails));
+filterInput.addEventListener("input", renderList);
+
+// Restaurar sesión
+const saved = sessionStorage.getItem(SESSION_KEY);
+if (saved) { adminKeyInput.value = saved; loadEmails(); }
