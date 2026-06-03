@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo — EE auto-adaptativa</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .key-gate { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+      .key-gate input { flex: 1; }
+      .back-link { display: inline-block; margin-bottom: 1rem; color: var(--muted);
+                   font-size: 0.85rem; text-decoration: none; }
+      .back-link:hover { color: var(--text); }
+      .param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
+      .param-grid label { margin: 0; }
+      .stat-row { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 0.5rem; }
+      .stat { font-size: 0.9rem; }
+      .stat b { display: block; color: var(--muted); font-weight: 500; font-size: 0.78rem; }
+      .stat span { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+      canvas { width: 100%; height: auto; display: block; background: #0d1117;
+               border: 1px solid var(--border); border-radius: 8px; }
+      .chart-cap { font-size: 0.82rem; color: var(--muted); margin: 0.5rem 0 0; }
+      .anim-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
+      .anim-row input[type=range] { flex: 1; margin: 0; }
+      .pill { display:inline-block; padding:0.15rem 0.6rem; border-radius:999px;
+              font-size:0.78rem; font-weight:600; }
+      .pill-ok { background:#1a5c2a; color:#6effa0; }
+      .pill-bad{ background:#5c1a1a; color:#ffaaaa; }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <header>
+        <h1>🧬 Demo — Estrategia Evolutiva auto-adaptativa</h1>
+        <p class="subtitle">
+          Vista privada. La misma función objetivo que ven los estudiantes, pero resuelta
+          con una EE <strong>(μ/ρ, λ)</strong> de doble hélice: cada individuo lleva su propio σ
+          y el algoritmo <strong>aprende solo</strong> el paso de mutación. No hay que adivinar nada.
+        </p>
+      </header>
+
+      <section class="card" id="auth-section">
+        <div class="key-gate">
+          <input type="password" id="admin-key" placeholder="Admin key" />
+          <button id="load-btn">Entrar</button>
+        </div>
+        <p id="auth-error" class="error" hidden></p>
+      </section>
+
+      <div id="panel" hidden>
+        <a href="/admin" class="back-link">← Volver al panel principal</a>
+
+        <section class="card">
+          <h2>Parámetros de la EE</h2>
+          <div class="param-grid">
+            <label>μ (padres)
+              <input type="number" id="mu" value="10" min="2" max="200" step="1" /></label>
+            <label>λ (hijos)
+              <input type="number" id="lambda" value="70" min="2" max="2000" step="1" /></label>
+            <label>ρ (recombinación)
+              <input type="number" id="rho" value="2" min="1" max="50" step="1" /></label>
+            <label>Generaciones
+              <input type="number" id="generaciones" value="60" min="1" max="500" step="1" /></label>
+            <label>τ (learning rate, vacío = auto)
+              <input type="number" id="tau" placeholder="auto" min="0.01" max="5" step="0.01" /></label>
+            <label>Corridas
+              <input type="number" id="runs" value="5" min="1" max="30" step="1" /></label>
+            <label>Semilla (vacío = aleatoria)
+              <input type="number" id="seed" placeholder="aleatoria" step="1" /></label>
+          </div>
+          <button id="btn-run">▶ Ejecutar EE</button>
+          <p id="run-msg" style="font-size:0.85rem;margin-top:0.6rem" hidden></p>
+        </section>
+
+        <div id="results" hidden>
+          <section class="card">
+            <h2>Resultado</h2>
+            <div class="stat-row">
+              <div class="stat"><b>Óptimo global (referencia)</b>
+                <span id="stat-global">—</span></div>
+              <div class="stat"><b>Tasa de éxito</b>
+                <span id="stat-success">—</span></div>
+            </div>
+            <div class="stat-row" style="align-items:center">
+              <label style="margin:0;color:var(--muted);font-size:0.85rem">Ver corrida:
+                <select id="run-select" style="margin-top:0.35rem"></select>
+              </label>
+              <div class="stat"><b>Mejor x</b><span id="stat-x">—</span></div>
+              <div class="stat"><b>Mejor fitness</b><span id="stat-fit">—</span></div>
+              <div class="stat"><b>Estado</b><span id="stat-conv">—</span></div>
+            </div>
+          </section>
+
+          <div class="tables-grid">
+            <section class="card">
+              <h2>Convergencia del fitness</h2>
+              <canvas id="chart-fit" width="560" height="300"></canvas>
+              <p class="chart-cap">Mejor fitness por generación. La línea punteada es el óptimo global.
+                Las corridas grises son las demás ejecuciones.</p>
+            </section>
+
+            <section class="card">
+              <h2>Auto-adaptación de σ</h2>
+              <canvas id="chart-sigma" width="560" height="300"></canvas>
+              <p class="chart-cap">σ promedio por generación (escala log). <strong>Esto es lo que
+                un σ fijo nunca hace</strong>: el algoritmo encoge su paso solo al converger.</p>
+            </section>
+          </div>
+
+          <section class="card">
+            <h2>Población sobre la función objetivo</h2>
+            <canvas id="chart-pop" width="1100" height="380"></canvas>
+            <div class="anim-row">
+              <button id="btn-play" class="secondary">▶ Animar</button>
+              <input type="range" id="gen-slider" min="0" max="0" value="0" />
+              <span id="gen-label" style="font-size:0.85rem;color:var(--muted);white-space:nowrap">Gen 0</span>
+            </div>
+            <p class="chart-cap">Cada punto es un individuo. Mira cómo la nube se concentra
+              en el mínimo global a medida que avanzan las generaciones.</p>
+          </section>
+        </div>
+      </div>
+    </main>
+    <script src="/admin/demo.js"></script>
+  </body>
+</html>

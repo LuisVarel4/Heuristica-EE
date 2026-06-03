@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.algorithm import AlgorithmServiceError, run_algorithm
 from app.config import settings
+from app.evolution_full import ejecutar_demo
 from app.email_rules import normalize_unal_email  # noqa: F401 (also used in search endpoint)
 from app.db import (
     add_to_whitelist,
@@ -256,6 +257,25 @@ def admin_set_cooldown(
     return {"ok": True, "cooldown_seconds": body.seconds}
 
 
+@app.get("/admin/demo/ee", include_in_schema=False)
+def admin_demo_ee(
+    key: str | None = Query(None, max_length=128),
+    mu: int = Query(10, ge=2, le=200),
+    lam: int = Query(70, alias="lambda", ge=2, le=2000),
+    rho: int = Query(2, ge=1, le=50),
+    generaciones: int = Query(60, ge=1, le=500),
+    tau: float | None = Query(None, gt=0, le=5),
+    runs: int = Query(1, ge=1, le=30),
+    seed: int | None = Query(None),
+) -> dict:
+    """Corre la EE completa auto-adaptativa (solo demostración del panel)."""
+    _check_admin_key(key)
+    try:
+        return ejecutar_demo(mu, lam, rho, generaciones, tau, runs, seed)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.post("/admin/leaderboard/clear", include_in_schema=False)
 def admin_clear_leaderboard(key: str | None = Query(None, max_length=128)) -> dict:
     """Elimina todos los envíos del leaderboard. Acción irreversible."""
@@ -340,6 +360,14 @@ def pagina_resultados_ocultos() -> FileResponse:
 @app.get("/admin/emails", include_in_schema=False)
 def pagina_admin_emails() -> FileResponse:
     path = _frontend / "admin" / "emails.html"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(path)
+
+
+@app.get("/admin/demo", include_in_schema=False)
+def pagina_admin_demo() -> FileResponse:
+    path = _frontend / "admin" / "demo.html"
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Not found")
     return FileResponse(path)
