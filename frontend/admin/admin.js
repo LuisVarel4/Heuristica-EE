@@ -15,6 +15,9 @@ const btnDisable    = document.getElementById("btn-disable");
 const toggleMsg     = document.getElementById("toggle-msg");
 const searchInput   = document.getElementById("search-input");
 const btnSearch     = document.getElementById("btn-search");
+const btnOpenClear        = document.getElementById("btn-open-clear");
+const clearModal          = document.getElementById("clear-modal");
+const btnCancelClear      = document.getElementById("btn-cancel-clear");
 const btnClear            = document.getElementById("btn-clear");
 const clearConfirmInput   = document.getElementById("clear-confirm-input");
 const clearMsg            = document.getElementById("clear-msg");
@@ -139,6 +142,29 @@ btnSearch.addEventListener("click", searchEmail);
 searchInput.addEventListener("keydown", e => { if (e.key === "Enter") searchEmail(); });
 btnAdd.addEventListener("click", addEmail);
 
+function closeModal() {
+  clearModal.hidden        = true;
+  clearModal.style.display = "none";
+  clearConfirmInput.value  = "";
+  btnClear.disabled        = true;
+  btnClear.style.opacity   = "0.5";
+  btnClear.style.cursor    = "not-allowed";
+  clearMsg.hidden          = true;
+}
+
+btnOpenClear.addEventListener("click", () => {
+  clearModal.hidden        = false;
+  clearModal.style.display = "flex";
+  clearConfirmInput.focus();
+});
+
+btnCancelClear.addEventListener("click", closeModal);
+
+// Cerrar al hacer click fuera del modal
+clearModal.addEventListener("click", (e) => {
+  if (e.target === clearModal) closeModal();
+});
+
 clearConfirmInput.addEventListener("input", () => {
   const ok = clearConfirmInput.value === "Delete";
   btnClear.disabled      = !ok;
@@ -163,10 +189,9 @@ btnClear.addEventListener("click", async () => {
   }
   clearMsg.textContent = `✓ Leaderboard limpiado. ${data.deleted} envío(s) eliminado(s).`;
   clearMsg.style.color = "#6effa0";
-  clearConfirmInput.value = "";
-  btnClear.disabled       = true;
-  btnClear.style.opacity  = "0.5";
-  btnClear.style.cursor   = "not-allowed";
+  clearMsg.hidden      = false;
+  // Cierra el modal después de 1.5s para que se lea el mensaje
+  setTimeout(closeModal, 1500);
 });
 
 btnLogout.addEventListener("click", () => {

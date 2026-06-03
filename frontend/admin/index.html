@@ -58,23 +58,38 @@
         </section>
 
         <!-- Zona peligrosa -->
-        <section class="card" style="margin-top:1.5rem;border:1px solid #5c1a1a">
+        <section class="card" style="margin-top:1.5rem">
           <h2 style="color:#ff8888">⚠️ Zona peligrosa</h2>
-          <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:0.75rem">
-            Elimina <strong>todos</strong> los envíos del leaderboard. Esta acción es irreversible.<br/>
-            Escribe <code>Delete</code> para habilitar el botón.
-          </p>
-          <div style="display:flex;gap:0.5rem;align-items:center">
-            <input id="clear-confirm-input" type="text" placeholder="Delete"
-                   style="width:120px" autocomplete="off" />
-            <button id="btn-clear" disabled style="background:#5c1a1a;color:#ffaaaa;
-                    border:1px solid #ff8888;padding:0.4rem 1rem;border-radius:6px;
-                    cursor:not-allowed;font-weight:600;opacity:0.5">
-              🗑 Limpiar leaderboard
-            </button>
-          </div>
-          <p id="clear-msg" style="font-size:0.85rem;margin-top:0.5rem" hidden></p>
+          <button id="btn-open-clear" style="background:#5c1a1a;color:#ffaaaa;
+                  border:1px solid #ff8888;padding:0.4rem 1rem;border-radius:6px;
+                  cursor:pointer;font-weight:600">
+            🗑 Limpiar leaderboard
+          </button>
         </section>
+
+        <!-- Modal de confirmación -->
+        <div id="clear-modal" hidden style="position:fixed;inset:0;background:rgba(0,0,0,0.7);
+             z-index:999;align-items:center;justify-content:center">
+          <div style="background:#0e1f30;border:1px solid #5c1a1a;border-radius:10px;
+                      padding:2rem;max-width:400px;width:90%">
+            <h3 style="color:#ff8888;margin-top:0">⚠️ Eliminar leaderboard</h3>
+            <p style="font-size:0.875rem;color:#8fa8be;margin-bottom:1rem">
+              Esta acción eliminará <strong>todos</strong> los envíos y es irreversible.<br/>
+              Escribe <code>Delete</code> para confirmar.
+            </p>
+            <input id="clear-confirm-input" type="text" placeholder="Delete"
+                   autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:1rem" />
+            <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+              <button id="btn-cancel-clear" class="secondary">Cancelar</button>
+              <button id="btn-clear" disabled style="background:#5c1a1a;color:#ffaaaa;
+                      border:1px solid #ff8888;padding:0.4rem 1rem;border-radius:6px;
+                      cursor:not-allowed;font-weight:600;opacity:0.5">
+                Eliminar
+              </button>
+            </div>
+            <p id="clear-msg" style="font-size:0.85rem;margin-top:0.75rem" hidden></p>
+          </div>
+        </div>
 
         <div class="admin-grid" style="margin-top:1.5rem">
 
