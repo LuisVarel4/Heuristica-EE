@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leaderboard admin — Heurística</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header>
+        <h1>Leaderboard (admin)</h1>
+        <p class="subtitle">Vista con correos institucionales. No compartir este enlace.</p>
+      </header>
+
+      <section class="card">
+        <div class="leaderboard-header">
+          <h2>Resultados completos</h2>
+          <button type="button" id="refresh-btn" class="secondary">Actualizar</button>
+        </div>
+        <p id="admin-error" class="error" hidden></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Alias</th>
+                <th>Correo</th>
+                <th>μ</th>
+                <th>σ</th>
+                <th>Gen.</th>
+                <th>Solución</th>
+                <th>Fitness</th>
+                <th>Hora (UTC−5)</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <tr>
+                <td colspan="9" class="muted">Cargando…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="/resultados/admin.js"></script>
+  </body>
+</html>

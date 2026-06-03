@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     generaciones INTEGER NOT NULL,
     solucion REAL NOT NULL,
     fitness REAL NOT NULL,
+    alias TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL
 );
 
@@ -46,9 +47,16 @@ def get_db():
         conn.close()
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(submissions)")}
+    if "alias" not in columns:
+        conn.execute("ALTER TABLE submissions ADD COLUMN alias TEXT NOT NULL DEFAULT ''")
+
+
 def init_db() -> None:
     with get_db() as conn:
         conn.executescript(SCHEMA)
+        _migrate(conn)
 
 
 def utc_now_iso() -> str:
@@ -84,37 +92,53 @@ def insert_submission(
     generaciones: int,
     solucion: float,
     fitness: float,
+    alias: str,
 ) -> int:
     created_at = utc_now_iso()
     cursor = conn.execute(
         """
-        INSERT INTO submissions (email, mu, sigma, generaciones, solucion, fitness, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO submissions (email, mu, sigma, generaciones, solucion, fitness, alias, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (email.strip().lower(), mu, sigma, generaciones, solucion, fitness, created_at),
+        (email.strip().lower(), mu, sigma, generaciones, solucion, fitness, alias.strip(), created_at),
     )
     return int(cursor.lastrowid)
 
 
+def get_best_fitness(conn: sqlite3.Connection, email: str) -> float | None:
+    row = conn.execute(
+        "SELECT MIN(fitness) AS best FROM submissions WHERE email = ?",
+        (email.strip().lower(),),
+    ).fetchone()
+    if not row or row["best"] is None:
+        return None
+    return float(row["best"])
+
+
 def fetch_leaderboard(conn: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
-    """One row per email: lowest fitness (ties: earliest submission)."""
+    """One row per email: lowest fitness; ties by earliest created_at."""
     return conn.execute(
         """
-        SELECT s.email, s.mu, s.sigma, s.generaciones, s.solucion, s.fitness, s.created_at
-        FROM submissions s
-        INNER JOIN (
-            SELECT email, MIN(fitness) AS best_fitness
+        SELECT email, alias, mu, sigma, generaciones, solucion, fitness, created_at
+        FROM (
+            SELECT
+                email,
+                alias,
+                mu,
+                sigma,
+                generaciones,
+                solucion,
+                fitness,
+                created_at,
+                id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY email
+                    ORDER BY fitness ASC, created_at ASC, id ASC
+                ) AS rn
             FROM submissions
-            GROUP BY email
-        ) best ON best.email = s.email AND s.fitness = best.best_fitness
-        WHERE s.id = (
-            SELECT s2.id
-            FROM submissions s2
-            WHERE s2.email = s.email AND s2.fitness = best.best_fitness
-            ORDER BY s2.created_at ASC, s2.id ASC
-            LIMIT 1
         )
-        ORDER BY s.fitness ASC, s.created_at ASC
+        WHERE rn = 1
+        ORDER BY fitness ASC, created_at ASC
         LIMIT ?
         """,
         (limit,),

@@ -1,9 +1,14 @@
 const API = "";
 const COOLDOWN_KEY = "heuristica_cooldown";
+const REFRESH_COOLDOWN_KEY = "heuristica_refresh_cooldown";
 const EMAIL_KEY = "heuristica_email";
+const ALIAS_KEY = "heuristica_alias";
+const REFRESH_COOLDOWN_MS = 3000;
+const UNAL_EMAIL_RE = /^[^\s@]+@unal\.edu\.co$/i;
 
 const form = document.getElementById("submit-form");
 const emailInput = document.getElementById("email");
+const aliasInput = document.getElementById("alias");
 const submitBtn = document.getElementById("submit-btn");
 const cooldownMsg = document.getElementById("cooldown-msg");
 const formError = document.getElementById("form-error");
@@ -12,14 +17,28 @@ const leaderboardBody = document.getElementById("leaderboard-body");
 const refreshBtn = document.getElementById("refresh-btn");
 
 let cooldownTimer = null;
+let refreshCooldownTimer = null;
+let refreshAvailableAt = 0;
+let autoRefreshTimer = null;
+const DECIMALS = 12;
 
 function loadStoredEmail() {
   const saved = localStorage.getItem(EMAIL_KEY);
   if (saved) emailInput.value = saved;
+  const savedAlias = localStorage.getItem(ALIAS_KEY);
+  if (savedAlias) aliasInput.value = savedAlias;
 }
 
 function saveEmail(email) {
   localStorage.setItem(EMAIL_KEY, email.trim().toLowerCase());
+}
+
+function saveAlias(alias) {
+  localStorage.setItem(ALIAS_KEY, alias.trim());
+}
+
+function isUnalEmail(email) {
+  return UNAL_EMAIL_RE.test(email.trim());
 }
 
 function getStoredCooldown() {
@@ -38,18 +57,62 @@ function setStoredCooldown(email, nextSubmitAt) {
   );
 }
 
+function setSubmitCooldown(active, leftSeconds) {
+  submitBtn.disabled = active;
+  submitBtn.textContent = active ? `Esperar (${leftSeconds}s)` : "Ejecutar y enviar";
+}
+
 function clearCooldownUi() {
   cooldownMsg.hidden = true;
-  submitBtn.disabled = false;
-  submitBtn.textContent = "Ejecutar y enviar";
+  setSubmitCooldown(false, 0);
   if (cooldownTimer) {
     clearInterval(cooldownTimer);
     cooldownTimer = null;
   }
 }
 
+function isRefreshOnCooldown() {
+  return Date.now() < refreshAvailableAt;
+}
+
+function updateRefreshButton() {
+  const left = Math.max(0, Math.ceil((refreshAvailableAt - Date.now()) / 1000));
+  if (left <= 0) {
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = "Actualizar";
+    if (refreshCooldownTimer) {
+      clearInterval(refreshCooldownTimer);
+      refreshCooldownTimer = null;
+    }
+    localStorage.removeItem(REFRESH_COOLDOWN_KEY);
+    return;
+  }
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = `Actualizar (${left}s)`;
+}
+
+function startRefreshCooldown() {
+  refreshAvailableAt = Date.now() + REFRESH_COOLDOWN_MS;
+  localStorage.setItem(REFRESH_COOLDOWN_KEY, String(refreshAvailableAt));
+  updateRefreshButton();
+  if (refreshCooldownTimer) clearInterval(refreshCooldownTimer);
+  refreshCooldownTimer = setInterval(updateRefreshButton, 200);
+}
+
+function applyStoredRefreshCooldown() {
+  const raw = localStorage.getItem(REFRESH_COOLDOWN_KEY);
+  if (!raw) return;
+  refreshAvailableAt = Number(raw);
+  if (!Number.isFinite(refreshAvailableAt) || Date.now() >= refreshAvailableAt) {
+    localStorage.removeItem(REFRESH_COOLDOWN_KEY);
+    return;
+  }
+  updateRefreshButton();
+  if (refreshCooldownTimer) clearInterval(refreshCooldownTimer);
+  refreshCooldownTimer = setInterval(updateRefreshButton, 200);
+}
+
 function showCooldown(remainingSeconds, nextSubmitAt) {
-  submitBtn.disabled = true;
   const update = () => {
     const target = new Date(nextSubmitAt).getTime();
     const left = Math.max(0, Math.ceil((target - Date.now()) / 1000));
@@ -60,7 +123,7 @@ function showCooldown(remainingSeconds, nextSubmitAt) {
     }
     cooldownMsg.hidden = false;
     cooldownMsg.textContent = `Espera ${left}s antes de enviar otra solución (el servidor también valida esto).`;
-    submitBtn.textContent = `Esperar (${left}s)`;
+    setSubmitCooldown(true, left);
   };
   update();
   cooldownTimer = setInterval(update, 500);
@@ -109,22 +172,54 @@ function showSuccess(message) {
   formError.hidden = true;
 }
 
-function formatNumber(value, digits = 6) {
-  return Number(value).toFixed(digits);
+function formatDecimal(value, digits = DECIMALS) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  if (n === 0) return "0";
+  const abs = Math.abs(n);
+  if (abs < 1e-8 || abs >= 1e10) return n.toExponential(Math.max(6, digits - 4));
+  return n.toFixed(digits);
+}
+
+function formatRank(rank) {
+  if (rank === 1) return "🏆 🥇";
+  if (rank === 2) return "🏆 🥈";
+  if (rank === 3) return "🏆 🥉";
+  return String(rank);
 }
 
 function formatTime(iso) {
   try {
-    return new Date(iso).toISOString().replace("T", " ").slice(0, 19);
+    return new Date(iso).toLocaleString("es-CO", {
+      timeZone: "America/Bogota",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
   } catch {
     return iso;
   }
 }
 
+function formatParam(value) {
+  if (value === null || value === undefined) return "—";
+  return value;
+}
+
 async function loadLeaderboard() {
   leaderboardBody.innerHTML = `<tr><td colspan="8" class="muted">Cargando…</td></tr>`;
   try {
-    const res = await fetch(`${API}/api/leaderboard`, { cache: "no-store" });
+    const viewer = emailInput.value.trim().toLowerCase();
+    const params = new URLSearchParams({ _t: String(Date.now()) });
+    if (viewer) params.set("viewer_email", viewer);
+    const res = await fetch(`${API}/api/leaderboard?${params}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+    });
     if (!res.ok) throw new Error("No se pudo cargar el leaderboard");
     const data = await res.json();
     if (!data.entries.length) {
@@ -136,13 +231,13 @@ async function loadLeaderboard() {
         const rankClass = row.rank <= 3 ? `top-${row.rank}` : "";
         return `
           <tr class="${rankClass}">
-            <td>${row.rank}</td>
-            <td>${row.email}</td>
-            <td>${row.mu}</td>
-            <td>${row.sigma}</td>
-            <td>${row.generaciones}</td>
-            <td>${formatNumber(row.solucion)}</td>
-            <td>${formatNumber(row.fitness)}</td>
+            <td class="rank-cell">${formatRank(row.rank)}</td>
+            <td>${row.alias}</td>
+            <td>${formatParam(row.mu)}</td>
+            <td>${formatParam(row.sigma)}</td>
+            <td>${formatParam(row.generaciones)}</td>
+            <td>${formatDecimal(row.solucion)}</td>
+            <td>${formatDecimal(row.fitness)}</td>
             <td>${formatTime(row.created_at)}</td>
           </tr>`;
       })
@@ -157,6 +252,7 @@ form.addEventListener("submit", async (event) => {
   hideMessages();
 
   const email = emailInput.value.trim();
+  const alias = aliasInput.value.trim();
   const mu = Number(document.getElementById("mu").value);
   const sigma = Number(document.getElementById("sigma").value);
   const generaciones = Number(document.getElementById("generaciones").value);
@@ -165,15 +261,35 @@ form.addEventListener("submit", async (event) => {
     showError("Ingresa tu correo.");
     return;
   }
-
+  if (!isUnalEmail(email)) {
+    showError("El correo debe ser del dominio @unal.edu.co (ej. nombre.apellido@unal.edu.co).");
+    return;
+  }
+  if (!alias) {
+    showError("Ingresa un alias para el leaderboard.");
+    return;
+  }
+  if (mu < 1 || generaciones < 1 || !Number.isFinite(mu) || !Number.isFinite(generaciones)) {
+    showError("μ y generaciones deben ser enteros ≥ 1 (sin negativos).");
+    return;
+  }
+  if (sigma <= 0 || !Number.isFinite(sigma)) {
+    showError("σ debe ser mayor que 0 (sin negativos ni cero).");
+    return;
+  }
+  if (!Number.isInteger(mu) || !Number.isInteger(generaciones)) {
+    showError("μ y generaciones deben ser números enteros.");
+    return;
+  }
   saveEmail(email);
+  saveAlias(alias);
   submitBtn.disabled = true;
 
   try {
     const res = await fetch(`${API}/api/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, mu, sigma, generaciones }),
+      body: JSON.stringify({ email, alias, mu, sigma, generaciones }),
     });
     const data = await res.json().catch(() => ({}));
 
@@ -198,13 +314,18 @@ form.addEventListener("submit", async (event) => {
 
     setStoredCooldown(email, data.next_submit_at);
     showCooldown(data.cooldown_seconds, data.next_submit_at);
-    showSuccess(
-      `Resultado: solución ≈ ${formatNumber(data.solucion)}, fitness = ${formatNumber(data.fitness)}`
-    );
+    let successText = `Resultado: solución = ${formatDecimal(data.solucion)}, fitness = ${formatDecimal(data.fitness)}`;
+    if (data.mensaje) successText += ` — ${data.mensaje}`;
+    if (data.is_new_best) {
+      successText += " — ¡Nuevo récord personal en el leaderboard!";
+    } else {
+      successText += " — Envío guardado; en el leaderboard sigue tu mejor fitness anterior (menor = mejor).";
+    }
+    showSuccess(successText);
     await loadLeaderboard();
   } catch {
     showError("Error de red. Intenta de nuevo.");
-    submitBtn.disabled = false;
+    if (!cooldownTimer) submitBtn.disabled = false;
   }
 });
 
@@ -213,12 +334,28 @@ emailInput.addEventListener("change", () => {
   clearCooldownUi();
   applyLocalCooldown();
   syncCooldownFromServer(emailInput.value);
+  loadLeaderboard();
 });
 
-refreshBtn.addEventListener("click", loadLeaderboard);
+emailInput.addEventListener("input", () => {
+  saveEmail(emailInput.value);
+});
+
+aliasInput.addEventListener("input", () => {
+  saveAlias(aliasInput.value);
+});
+
+refreshBtn.addEventListener("click", async () => {
+  if (isRefreshOnCooldown()) return;
+  await loadLeaderboard();
+  startRefreshCooldown();
+});
 
 loadStoredEmail();
 applyLocalCooldown();
+applyStoredRefreshCooldown();
 syncCooldownFromServer(emailInput.value);
 loadLeaderboard();
-setInterval(loadLeaderboard, 15000);
+autoRefreshTimer = setInterval(() => {
+  if (!isRefreshOnCooldown()) loadLeaderboard();
+}, 15000);

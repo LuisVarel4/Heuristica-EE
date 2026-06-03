@@ -1,6 +1,6 @@
 # Heuristica-EE
 
-Class activity: students submit evolutionary algorithm parameters (`μ`, `σ`, `generaciones`) and their email. The backend calls a **Google Cloud Function** that runs the algorithm, stores results in **SQLite**, and shows a **leaderboard** (lower `fitness = x²` is better).
+Class activity: students submit evolutionary algorithm parameters (`μ`, `σ`, `generaciones`; must be non-negative) and their email. The Cloud Function caps work to **μ × generaciones ≤ 10 000** (adjusting generations if needed). The backend runs a **multimodal** objective (lower fitness is better) and stores results in **SQLite**.
 
 A **30-second cooldown per email** is enforced on the server (survives page reload). The UI also disables the button locally using `localStorage` for immediate feedback.
 
@@ -30,7 +30,8 @@ Expected load (~30 students, up to ~600 requests / 10 min): SQLite on a single V
 |--------|------|-------------|
 | `POST` | `/api/submit` | Run algorithm, save row, return result + `next_submit_at` |
 | `GET` | `/api/cooldown?email=` | Remaining cooldown (used after reload) |
-| `GET` | `/api/leaderboard` | Top submissions by fitness |
+| `GET` | `/api/leaderboard` | Top submissions by fitness (alias only, no emails) |
+| `GET` | `/api/leaderboard/admin?key=` | Full leaderboard with emails (hidden; requires `ADMIN_KEY`) |
 | `GET` | `/api/health` | Health check |
 
 ## Local development
@@ -58,6 +59,15 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Open **http://localhost:8000** (the API serves the frontend).
+
+**Both services at once (GCP VM / Linux):**
+
+```bash
+chmod +x scripts/start-all.sh scripts/stop-all.sh
+./scripts/start-all.sh
+```
+
+Windows: `.\scripts\start-all.ps1` — see `HowToRun.txt`.
 
 ## Deploy Google Cloud Function
 

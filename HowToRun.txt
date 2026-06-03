@@ -1,15 +1,51 @@
-Run locally
-Terminal 1 — function:
+WINDOWS (one command — two minimized windows)
+------------------------------------------------
+cd Heuristica-EE
+.\scripts\start-all.ps1
+Open http://localhost:8000
+Stop: .\scripts\stop-all.ps1
 
-cd cloud-function
-.\.venv\Scripts\Activate.ps1   # after: python -m venv .venv; pip install -r requirements.txt
-functions-framework --target=run_evolution --port=8081
+If you see "generaciones must be between 1 and 500", restart services
+(.\scripts\stop-all.ps1 then .\scripts\start-all.ps1) or set in backend/.env:
+RUN_EVOLUTION_LOCALLY=true
 
-Terminal 2 — API:
+Admin leaderboard (emails visible):
+  Set ADMIN_KEY in backend/.env
+  Open http://localhost:8000/resultados/ocultos
 
-cd backend
-copy .env.example .env
-# CLOUD_FUNCTION_URL=http://127.0.0.1:8081
-.\.venv\Scripts\uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+Manual (two terminals): see scripts\local-dev.ps1
 
-Open http://localhost:8000.
+------------------------------------------------
+LINUX / GCP VM (one command — both in background)
+------------------------------------------------
+cd ~/Heuristica-EE
+chmod +x scripts/start-all.sh scripts/stop-all.sh
+./scripts/start-all.sh
+
+Open http://YOUR_VM_EXTERNAL_IP:8000
+(allow TCP 8000 in the VPC firewall if needed)
+
+Logs:  logs/functions.log  logs/backend.log
+Stop:  ./scripts/stop-all.sh
+
+Production on VM: set CLOUD_FUNCTION_URL in backend/.env to your
+Google Cloud Function HTTPS URL instead of http://127.0.0.1:8081
+(if the algorithm runs in GCF, you can skip the local function and
+only run uvicorn — or keep start-all.sh for all-local mode).
+
+------------------------------------------------
+LINUX manual (two terminals)
+------------------------------------------------
+Terminal 1 — function (port 8081):
+  cd cloud-function
+  python3 -m venv .venv && source .venv/bin/activate
+  pip install -r requirements.txt
+  functions-framework --target=run_evolution --port=8081
+
+Terminal 2 — API (port 8000):
+  cd backend
+  cp .env.example .env
+  # CLOUD_FUNCTION_URL=http://127.0.0.1:8081
+  python3 -m venv .venv && source .venv/bin/activate
+  pip install -r requirements.txt
+  uvicorn app.main:app --host 0.0.0.0 --port 8000

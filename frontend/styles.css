@@ -55,6 +55,7 @@ code {
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.25rem;
+  overflow: visible;
 }
 
 .card h2 {
@@ -67,6 +68,95 @@ form label {
   margin-bottom: 0.85rem;
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+.field-email {
+  margin-bottom: 0.85rem;
+  overflow: visible;
+}
+
+.field-email > label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tooltip-trigger {
+  margin: 0;
+  padding: 0.2rem 0.4rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.tooltip-trigger:hover,
+.tooltip-trigger:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.tooltip-text {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.5rem);
+  top: auto;
+  z-index: 50;
+  width: max-content;
+  max-width: 280px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0d1117;
+  color: var(--text);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  pointer-events: none;
+}
+
+.tooltip-text::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  bottom: auto;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border);
+}
+
+.tooltip-trigger:hover + .tooltip-text,
+.tooltip-trigger:focus-visible + .tooltip-text {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 input {
@@ -149,6 +239,11 @@ td {
 th {
   color: var(--muted);
   font-weight: 500;
+}
+
+.rank-cell {
+  white-space: nowrap;
+  font-size: 1rem;
 }
 
 tr.top-1 td {

@@ -1,4 +1,6 @@
-# Run API + local Cloud Function emulator (two terminals recommended).
+# Quick start (both services):  .\scripts\start-all.ps1
+#
+# Or run API + local Cloud Function emulator in two terminals:
 # Terminal 1 — function:
 #   cd cloud-function
 #   python -m venv .venv; .\.venv\Scripts\Activate.ps1

@@ -9,32 +9,73 @@
   <body>
     <main class="layout">
       <header>
-        <h1>Estrategia evolutiva (1+1)</h1>
+        <h1>Estrategia evolutiva (μ+ λ)</h1>
         <p class="subtitle">
-          Minimiza <code>f(x) = x²</code>. El leaderboard muestra solo la mejor solución por correo.
+          Minimiza
+          <code>f(x) = ¼(x−2.1)² + sin(2.8x) + 0.6·cos(4.2x) + 0.15·sin²(1.7x+1.2)</code>
+          En el servidor,
+          <code>μ × generaciones ≤ 10 000</code> (si lo superas, se ajustan las generaciones).
+          Solo correos <code>@unal.edu.co</code>. El leaderboard muestra tu <strong>mejor fitness</strong>
+          (menor = mejor), no el último envío.
+          Los correos no se muestran; usa un alias público. Solo ves μ, σ y generaciones de tu correo.
         </p>
       </header>
 
       <section class="card">
         <h2>Enviar solución</h2>
         <form id="submit-form" novalidate>
+          <div class="field-email">
+            <div class="label-row">
+              <label for="email">Correo institucional</label>
+              <span class="tooltip-wrap">
+                <button
+                  type="button"
+                  class="tooltip-trigger"
+                  aria-describedby="email-tooltip"
+                  aria-label="Información sobre premiación"
+                >
+                  ℹ️
+                </button>
+                <span id="email-tooltip" class="tooltip-text" role="tooltip">
+                  Los correos que no existan en el directorio institucional no serán tenidos en cuenta para la premiación.
+                </span>
+              </span>
+            </div>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder="nombre.apellido@unal.edu.co"
+              pattern="[^@\s]+@unal\.edu\.co"
+              title="Solo correos @unal.edu.co"
+            />
+          </div>
+
           <label>
-            Correo institucional
-            <input type="email" id="email" name="email" required placeholder="estudiante@unal.edu.co" />
+            Alias (nombre en el leaderboard)
+            <input
+              type="text"
+              id="alias"
+              name="alias"
+              required
+              maxlength="40"
+              placeholder="Ej. EvoMaster42"
+            />
           </label>
 
           <div class="grid">
             <label>
               μ (tamaño población)
-              <input type="number" id="mu" name="mu" min="1" max="500" value="20" required />
+              <input type="number" id="mu" name="mu" min="1" step="1" value="20" required />
             </label>
             <label>
               σ (desviación mutación)
-              <input type="number" id="sigma" name="sigma" min="0.01" max="10" step="0.01" value="1" required />
+              <input type="number" id="sigma" name="sigma" min="0.0001" step="any" value="1" required />
             </label>
             <label>
               Generaciones
-              <input type="number" id="generaciones" name="generaciones" min="1" max="500" value="50" required />
+              <input type="number" id="generaciones" name="generaciones" min="1" step="1" value="50" required />
             </label>
           </div>
 
@@ -56,13 +97,13 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th>Correo</th>
+                <th>Alias</th>
                 <th>μ</th>
                 <th>σ</th>
                 <th>Gen.</th>
                 <th>Solución</th>
                 <th>Fitness</th>
-                <th>Hora (UTC)</th>
+                <th>Hora (UTC−5)</th>
               </tr>
             </thead>
             <tbody id="leaderboard-body">

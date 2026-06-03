@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     generaciones INTEGER NOT NULL,
     solucion REAL NOT NULL,
     fitness REAL NOT NULL,
+    alias TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL
 );
 
