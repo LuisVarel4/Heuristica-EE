@@ -97,27 +97,24 @@ def insert_submission(
 
 
 def fetch_leaderboard(conn: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
-    """One row per email: the submission with lowest fitness (ties: earliest)."""
+    """One row per email: lowest fitness (ties: earliest submission)."""
     return conn.execute(
         """
-        SELECT email, mu, sigma, generaciones, solucion, fitness, created_at
-        FROM (
-            SELECT
-                email,
-                mu,
-                sigma,
-                generaciones,
-                solucion,
-                fitness,
-                created_at,
-                ROW_NUMBER() OVER (
-                    PARTITION BY email
-                    ORDER BY fitness ASC, created_at ASC
-                ) AS rn
+        SELECT s.email, s.mu, s.sigma, s.generaciones, s.solucion, s.fitness, s.created_at
+        FROM submissions s
+        INNER JOIN (
+            SELECT email, MIN(fitness) AS best_fitness
             FROM submissions
+            GROUP BY email
+        ) best ON best.email = s.email AND s.fitness = best.best_fitness
+        WHERE s.id = (
+            SELECT s2.id
+            FROM submissions s2
+            WHERE s2.email = s.email AND s2.fitness = best.best_fitness
+            ORDER BY s2.created_at ASC, s2.id ASC
+            LIMIT 1
         )
-        WHERE rn = 1
-        ORDER BY fitness ASC, created_at ASC
+        ORDER BY s.fitness ASC, s.created_at ASC
         LIMIT ?
         """,
         (limit,),

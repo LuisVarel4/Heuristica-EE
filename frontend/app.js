@@ -124,7 +124,7 @@ function formatTime(iso) {
 async function loadLeaderboard() {
   leaderboardBody.innerHTML = `<tr><td colspan="8" class="muted">Cargando…</td></tr>`;
   try {
-    const res = await fetch(`${API}/api/leaderboard`);
+    const res = await fetch(`${API}/api/leaderboard`, { cache: "no-store" });
     if (!res.ok) throw new Error("No se pudo cargar el leaderboard");
     const data = await res.json();
     if (!data.entries.length) {

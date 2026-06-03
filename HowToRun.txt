@@ -1,0 +1,15 @@
+Run locally
+Terminal 1 — function:
+
+cd cloud-function
+.\.venv\Scripts\Activate.ps1   # after: python -m venv .venv; pip install -r requirements.txt
+functions-framework --target=run_evolution --port=8081
+
+Terminal 2 — API:
+
+cd backend
+copy .env.example .env
+# CLOUD_FUNCTION_URL=http://127.0.0.1:8081
+.\.venv\Scripts\uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+Open http://localhost:8000.

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -76,7 +76,8 @@ def cooldown(email: str = Query(..., min_length=3, max_length=254)) -> CooldownR
 
 
 @app.get("/api/leaderboard", response_model=LeaderboardResponse)
-def leaderboard() -> LeaderboardResponse:
+def leaderboard(response: Response) -> LeaderboardResponse:
+    response.headers["Cache-Control"] = "no-store"
     with get_db() as conn:
         rows = fetch_leaderboard(conn, settings.leaderboard_limit)
 
