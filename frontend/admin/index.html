@@ -41,7 +41,7 @@
         <p id="auth-error" class="error" hidden></p>
       </section>
 
-      <div id="session-bar" hidden style="display:flex;align-items:center;justify-content:space-between;
+      <div id="session-bar" hidden style="align-items:center;justify-content:space-between;
            background:#1e3a5f;border-radius:8px;padding:0.5rem 1rem;margin-bottom:0.5rem;font-size:0.85rem;color:#cfe2f3">
         <span>🔐 Sesión activa</span>
         <button id="btn-logout" class="secondary" style="padding:0.2rem 0.8rem;font-size:0.8rem">Cerrar sesión</button>
@@ -55,6 +55,25 @@
           <a id="link-leaderboard" href="/resultados/ocultos" class="nav-btn" target="_blank">
             📊 Leaderboard completo (con correos)
           </a>
+        </section>
+
+        <!-- Zona peligrosa -->
+        <section class="card" style="margin-top:1.5rem;border:1px solid #5c1a1a">
+          <h2 style="color:#ff8888">⚠️ Zona peligrosa</h2>
+          <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:0.75rem">
+            Elimina <strong>todos</strong> los envíos del leaderboard. Esta acción es irreversible.<br/>
+            Escribe <code>Delete</code> para habilitar el botón.
+          </p>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <input id="clear-confirm-input" type="text" placeholder="Delete"
+                   style="width:120px" autocomplete="off" />
+            <button id="btn-clear" disabled style="background:#5c1a1a;color:#ffaaaa;
+                    border:1px solid #ff8888;padding:0.4rem 1rem;border-radius:6px;
+                    cursor:not-allowed;font-weight:600;opacity:0.5">
+              🗑 Limpiar leaderboard
+            </button>
+          </div>
+          <p id="clear-msg" style="font-size:0.85rem;margin-top:0.5rem" hidden></p>
         </section>
 
         <div class="admin-grid" style="margin-top:1.5rem">

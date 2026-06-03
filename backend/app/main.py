@@ -11,6 +11,7 @@ from app.config import settings
 from app.email_rules import normalize_unal_email  # noqa: F401 (also used in search endpoint)
 from app.db import (
     add_to_whitelist,
+    clear_submissions,
     fetch_leaderboard,
     get_best_fitness,
     get_db,
@@ -199,6 +200,15 @@ def admin_get_config(key: str | None = Query(None, max_length=128)) -> ConfigRes
         whitelist_enabled=enabled,
         whitelist_count=len(rows),
     )
+
+
+@app.post("/admin/leaderboard/clear", include_in_schema=False)
+def admin_clear_leaderboard(key: str | None = Query(None, max_length=128)) -> dict:
+    """Elimina todos los envíos del leaderboard. Acción irreversible."""
+    _check_admin_key(key)
+    with get_db() as conn:
+        deleted = clear_submissions(conn)
+    return {"ok": True, "deleted": deleted}
 
 
 @app.get("/admin/config/emails", include_in_schema=False)

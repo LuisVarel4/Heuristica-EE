@@ -15,6 +15,9 @@ const btnDisable    = document.getElementById("btn-disable");
 const toggleMsg     = document.getElementById("toggle-msg");
 const searchInput   = document.getElementById("search-input");
 const btnSearch     = document.getElementById("btn-search");
+const btnClear            = document.getElementById("btn-clear");
+const clearConfirmInput   = document.getElementById("clear-confirm-input");
+const clearMsg            = document.getElementById("clear-msg");
 const searchResult  = document.getElementById("search-result");
 const searchMsg     = document.getElementById("search-msg");
 const btnAdd        = document.getElementById("btn-add");
@@ -46,9 +49,10 @@ async function loadConfig() {
   if (!res.ok) { authError.textContent = "Error al cargar."; authError.hidden = false; return; }
   const data = await res.json();
   saveKey(getKey());
-  authSection.hidden = true;
-  sessionBar.hidden  = false;
-  configPanel.hidden = false;
+  authSection.hidden    = true;
+  sessionBar.hidden     = false;
+  sessionBar.style.display = "flex";
+  configPanel.hidden    = false;
   renderBadge(data.whitelist_enabled);
   wlCount.textContent = data.whitelist_count;
 }
@@ -134,6 +138,36 @@ btnDisable.addEventListener("click", () => toggleWhitelist(false));
 btnSearch.addEventListener("click", searchEmail);
 searchInput.addEventListener("keydown", e => { if (e.key === "Enter") searchEmail(); });
 btnAdd.addEventListener("click", addEmail);
+
+clearConfirmInput.addEventListener("input", () => {
+  const ok = clearConfirmInput.value === "Delete";
+  btnClear.disabled      = !ok;
+  btnClear.style.opacity = ok ? "1"            : "0.5";
+  btnClear.style.cursor  = ok ? "pointer"      : "not-allowed";
+});
+
+btnClear.addEventListener("click", async () => {
+  if (clearConfirmInput.value !== "Delete") return;
+  clearMsg.hidden = true;
+
+  const res = await fetch(
+    `${API}/admin/leaderboard/clear?key=${encodeURIComponent(getKey())}`,
+    { method: "POST" }
+  );
+  const data = await res.json().catch(() => ({}));
+  clearMsg.hidden = false;
+  if (!res.ok) {
+    clearMsg.textContent = data.detail || "Error al limpiar.";
+    clearMsg.style.color = "#ff8888";
+    return;
+  }
+  clearMsg.textContent = `✓ Leaderboard limpiado. ${data.deleted} envío(s) eliminado(s).`;
+  clearMsg.style.color = "#6effa0";
+  clearConfirmInput.value = "";
+  btnClear.disabled       = true;
+  btnClear.style.opacity  = "0.5";
+  btnClear.style.cursor   = "not-allowed";
+});
 
 btnLogout.addEventListener("click", () => {
   sessionStorage.removeItem(SESSION_KEY);

@@ -49,8 +49,9 @@ async function loadEmails() {
   if (!res.ok) { authError.textContent = "Error al cargar."; authError.hidden = false; return; }
   const data = await res.json();
   sessionStorage.setItem(SESSION_KEY, getKey());
-  authSection.hidden = true;
-  sessionBar.hidden  = false;
+  authSection.hidden       = true;
+  sessionBar.hidden        = false;
+  sessionBar.style.display = "flex";
   allEmails = data.emails;
   panel.hidden = false;
   renderList();

@@ -233,6 +233,12 @@ def get_best_fitness(conn: sqlite3.Connection, email: str) -> float | None:
     return float(row["best"])
 
 
+def clear_submissions(conn: sqlite3.Connection) -> int:
+    """Elimina todos los envíos. Retorna el número de filas borradas."""
+    cursor = conn.execute("DELETE FROM submissions")
+    return cursor.rowcount
+
+
 def fetch_leaderboard(conn: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
     """One row per email: lowest fitness; ties by earliest created_at."""
     return conn.execute(

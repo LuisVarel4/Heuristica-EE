@@ -64,9 +64,10 @@ async function loadAdminLeaderboard() {
   }
 
   sessionStorage.setItem(SESSION_KEY, getKey());
-  authSection.hidden = true;
-  sessionBar.hidden  = false;
-  leaderboardPanel.hidden = false;
+  authSection.hidden       = true;
+  sessionBar.hidden        = false;
+  sessionBar.style.display = "flex";
+  leaderboardPanel.hidden  = false;
 
   const data = await res.json();
   if (!data.entries.length) {
