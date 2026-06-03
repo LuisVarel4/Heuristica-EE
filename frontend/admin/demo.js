@@ -44,6 +44,7 @@ const segUseful    = document.getElementById("seg-useful");
 const segWaste     = document.getElementById("seg-waste");
 const costNote     = document.getElementById("cost-note");
 
+const chartFunc   = document.getElementById("chart-func");
 const chartFit    = document.getElementById("chart-fit");
 const chartSigma  = document.getElementById("chart-sigma");
 const chartPop    = document.getElementById("chart-pop");
@@ -65,6 +66,85 @@ function fmt(v) {
 function makeScale(d0, d1, r0, r1) {
   const span = (d1 - d0) || 1;
   return (v) => r0 + ((v - d0) / span) * (r1 - r0);
+}
+
+// ── Gráfica estática de f(x) ─────────────────────────────────────────────
+function plotFunction(canvas) {
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const padL = 56, padR = 20, padT = 20, padB = 36;
+  ctx.clearRect(0, 0, W, H);
+
+  const N = 800, curve = [];
+  for (let i = 0; i <= N; i++) {
+    const x = -10 + (20 * i) / N;
+    curve.push({ x, y: fitness(x) });
+  }
+  const yvals = curve.map(p => p.y);
+  const ymin = Math.min(...yvals), ymax = Math.max(...yvals);
+  const ypad = (ymax - ymin) * 0.08;
+  const sx = makeScale(-10, 10, padL, W - padR);
+  const sy = makeScale(ymin - ypad, ymax + ypad, H - padB, padT);
+
+  ctx.font = "13px system-ui";
+
+  // Grid horizontal
+  for (let i = 0; i <= 5; i++) {
+    const yv = (ymin - ypad) + (ymax - ymin + 2 * ypad) * (i / 5);
+    const py = sy(yv);
+    ctx.strokeStyle = COLORS.grid; ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, py); ctx.lineTo(W - padR, py); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = COLORS.muted; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillText(fmt(yv), padL - 6, py);
+  }
+
+  // Línea guía y = 0
+  if (ymin < 0 && ymax > 0) {
+    const py = sy(0);
+    ctx.strokeStyle = COLORS.muted; ctx.globalAlpha = 0.4;
+    ctx.setLineDash([2, 4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, py); ctx.lineTo(W - padR, py); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = COLORS.muted; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+    ctx.fillText("0", padL + 4, py - 2);
+  }
+
+  // Etiquetas X
+  ctx.fillStyle = COLORS.muted; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (let x = -10; x <= 10; x += 2) ctx.fillText(x, sx(x), H - padB + 6);
+
+  // Curva f(x) con gradiente por valor
+  ctx.lineWidth = 2.5; ctx.strokeStyle = COLORS.accent;
+  ctx.beginPath();
+  curve.forEach((p, i) => {
+    const px = sx(p.x), py = sy(p.y);
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  });
+  ctx.stroke();
+
+  // Óptimo global (calculado en el cliente con malla fina)
+  let bx = curve[0].x, bf = curve[0].y;
+  curve.forEach(p => { if (p.y < bf) { bf = p.y; bx = p.x; } });
+
+  // Línea vertical punteada naranja
+  ctx.strokeStyle = COLORS.warn; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(sx(bx), padT); ctx.lineTo(sx(bx), H - padB); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Punto del óptimo
+  ctx.fillStyle = COLORS.warn;
+  ctx.beginPath(); ctx.arc(sx(bx), sy(bf), 5, 0, Math.PI * 2); ctx.fill();
+
+  // Etiqueta del óptimo
+  ctx.fillStyle = COLORS.warn; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+  ctx.font = "bold 13px system-ui";
+  ctx.fillText(`x≈${fmt(bx)}  f≈${fmt(bf)}`, sx(bx), sy(bf) - 8);
+  ctx.font = "13px system-ui";
+
+  // Eje X label
+  ctx.fillStyle = COLORS.muted; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+  ctx.fillText("x", (padL + W - padR) / 2, H - 1);
 }
 
 // ── Gráfica de líneas genérica (convergencia y σ) ──────────────────────────
@@ -376,6 +456,7 @@ async function authenticate() {
   sessionStorage.setItem(SESSION_KEY, getKey());
   authSection.hidden = true;
   panel.hidden = false;
+  plotFunction(chartFunc);
 }
 
 // ── Eventos ────────────────────────────────────────────────────────────────
