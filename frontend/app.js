@@ -160,7 +160,7 @@ function showCooldown(remainingSeconds, nextSubmitAt) {
       return;
     }
     cooldownMsg.hidden = false;
-    cooldownMsg.textContent = `Espera ${left}s antes de enviar otra solución (el servidor también valida esto).`;
+    cooldownMsg.textContent = `Espera ${left}s antes de enviar otra solución.`;
     setSubmitCooldown(true, left);
   };
   update();
