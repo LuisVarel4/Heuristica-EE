@@ -11,8 +11,11 @@ const configPanel   = document.getElementById("config-panel");
 const wlBadge       = document.getElementById("wl-badge");
 const wlCount       = document.getElementById("wl-count");
 const retoBadge      = document.getElementById("reto-badge");
+const retoTimer      = document.getElementById("reto-timer");
 const btnRetoToggle  = document.getElementById("btn-reto-toggle");
 const retoMsg        = document.getElementById("reto-msg");
+let timerInterval    = null;
+let retoStartedAt    = null;
 const btnEnable     = document.getElementById("btn-enable");
 const btnDisable    = document.getElementById("btn-disable");
 const toggleMsg     = document.getElementById("toggle-msg");
@@ -38,13 +41,39 @@ function renderBadge(enabled) {
   wlBadge.className   = "badge " + (enabled ? "badge-on" : "badge-off");
 }
 
-function renderRetoBadge(enabled) {
-  retoBadge.textContent = enabled ? "🟢 ACTIVO" : "🔴 INACTIVO";
-  retoBadge.className   = "badge " + (enabled ? "badge-on" : "badge-off");
-  btnRetoToggle.textContent   = enabled ? "⏹ Detener reto" : "▶ Iniciar reto";
+function formatElapsed(startIso) {
+  const secs = Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
+  const h = String(Math.floor(secs / 3600)).padStart(2, "0");
+  const m = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
+  const s = String(secs % 60).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
+
+function startTimer(startIso) {
+  retoStartedAt = startIso;
+  retoTimer.hidden = false;
+  retoTimer.textContent = formatElapsed(startIso);
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    retoTimer.textContent = formatElapsed(retoStartedAt);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  retoTimer.hidden = true;
+  retoStartedAt = null;
+}
+
+function renderRetoBadge(enabled, startedAt = null) {
+  retoBadge.textContent          = enabled ? "🟢 ACTIVO" : "🔴 INACTIVO";
+  retoBadge.className            = "badge " + (enabled ? "badge-on" : "badge-off");
+  btnRetoToggle.textContent      = enabled ? "⏹ Detener reto" : "▶ Iniciar reto";
   btnRetoToggle.style.background = enabled ? "#5c1a1a" : "#1a5c2a";
   btnRetoToggle.style.color      = enabled ? "#ffaaaa" : "#6effa0";
   btnRetoToggle.dataset.current  = enabled ? "1" : "0";
+  if (enabled && startedAt) startTimer(startedAt);
+  else stopTimer();
 }
 
 async function loadConfig() {
@@ -68,7 +97,7 @@ async function loadConfig() {
   sessionBar.hidden     = false;
   sessionBar.style.display = "flex";
   configPanel.hidden    = false;
-  renderRetoBadge(data.reto_enabled);
+  renderRetoBadge(data.reto_enabled, data.reto_started_at);
   renderBadge(data.whitelist_enabled);
   wlCount.textContent = data.whitelist_count;
 }
@@ -87,7 +116,7 @@ async function toggleReto(enabled) {
     retoMsg.hidden = false;
     return;
   }
-  renderRetoBadge(data.reto_enabled);
+  renderRetoBadge(data.reto_enabled, data.reto_started_at);
   retoMsg.textContent = data.reto_enabled
     ? "✓ Reto iniciado — los estudiantes ya pueden enviar."
     : "⏹ Reto detenido — no se aceptan más envíos.";
@@ -173,6 +202,9 @@ loadBtn.addEventListener("click", loadConfig);
 adminKeyInput.addEventListener("keydown", e => { if (e.key === "Enter") loadConfig(); });
 btnRetoToggle.addEventListener("click", () => {
   const currentlyActive = btnRetoToggle.dataset.current === "1";
+  if (currentlyActive) {
+    if (!confirm("¿Seguro que quieres detener el reto? Los estudiantes dejarán de poder enviar.")) return;
+  }
   toggleReto(!currentlyActive);
 });
 btnEnable.addEventListener("click",    () => toggleWhitelist(true));

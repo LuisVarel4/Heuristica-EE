@@ -18,6 +18,7 @@ from app.db import (
     get_history,
     get_last_submission_time,
     get_registered_alias,
+    get_reto_started_at,
     init_db,
     insert_submission,
     is_email_whitelisted,
@@ -225,13 +226,15 @@ def admin_get_config(key: str | None = Query(None, max_length=128)) -> ConfigRes
     """Retorna el estado de la lista blanca y el total de correos (sin exponerlos)."""
     _check_admin_key(key)
     with get_db() as conn:
-        enabled = is_whitelist_enabled(conn)
-        rows    = list_whitelist(conn)
-        reto    = is_reto_enabled(conn)
+        enabled    = is_whitelist_enabled(conn)
+        rows       = list_whitelist(conn)
+        reto       = is_reto_enabled(conn)
+        started_at = get_reto_started_at(conn)
     return ConfigResponse(
         whitelist_enabled=enabled,
         whitelist_count=len(rows),
         reto_enabled=reto,
+        reto_started_at=started_at if reto else None,
     )
 
 
@@ -292,7 +295,8 @@ def admin_toggle_reto(
     _check_admin_key(key)
     with get_db() as conn:
         set_reto_enabled(conn, body.enabled)
-    return {"ok": True, "reto_enabled": body.enabled}
+        started_at = get_reto_started_at(conn) if body.enabled else None
+    return {"ok": True, "reto_enabled": body.enabled, "reto_started_at": started_at}
 
 
 @app.post("/admin/config/toggle", include_in_schema=False)

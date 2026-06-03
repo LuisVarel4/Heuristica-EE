@@ -145,11 +145,24 @@ def is_reto_enabled(conn: sqlite3.Connection) -> bool:
 
 
 def set_reto_enabled(conn: sqlite3.Connection, enabled: bool) -> None:
-    """Activa o desactiva el reto."""
+    """Activa o desactiva el reto. Al activar, guarda el timestamp de inicio."""
     conn.execute(
         "INSERT OR REPLACE INTO app_settings (key, value) VALUES ('reto_enabled', ?)",
         ("1" if enabled else "0",),
     )
+    if enabled:
+        conn.execute(
+            "INSERT OR REPLACE INTO app_settings (key, value) VALUES ('reto_started_at', ?)",
+            (utc_now_iso(),),
+        )
+
+
+def get_reto_started_at(conn: sqlite3.Connection) -> str | None:
+    """Retorna el ISO timestamp de cuando se inició el reto, o None si nunca."""
+    row = conn.execute(
+        "SELECT value FROM app_settings WHERE key = 'reto_started_at'"
+    ).fetchone()
+    return row["value"] if row else None
 
 
 def is_whitelist_enabled(conn: sqlite3.Connection) -> bool:

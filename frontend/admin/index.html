@@ -22,6 +22,8 @@
                  color: #cfe2f3; border-radius: 6px; text-decoration: none;
                  font-size: 0.9rem; border: 1px solid #2e5a8f; }
       .nav-btn:hover { background: #2e5a8f; }
+      #reto-timer { font-size: 2rem; font-weight: 700; color: #f0a500;
+                    letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
     </style>
   </head>
   <body>
@@ -52,9 +54,12 @@
         <!-- Control del reto -->
         <section class="card" id="reto-card" style="margin-bottom:1.5rem">
           <h2>Control del reto</h2>
-          <div class="toggle-row">
-            <span>Estado:</span>
-            <span id="reto-badge" class="badge">…</span>
+          <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;margin-bottom:1rem">
+            <div class="toggle-row" style="margin:0">
+              <span>Estado:</span>
+              <span id="reto-badge" class="badge">…</span>
+            </div>
+            <div id="reto-timer" hidden>00:00:00</div>
           </div>
           <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:1rem">
             Mientras esté <strong>inactivo</strong>, nadie puede enviar soluciones.
@@ -84,7 +89,7 @@
           </button>
         </section>
 
-        <!-- Modal de confirmación -->
+        <!-- Modal limpiar leaderboard -->
         <div id="clear-modal" hidden style="position:fixed;inset:0;background:rgba(0,0,0,0.7);
              z-index:999;align-items:center;justify-content:center">
           <div style="background:#0e1f30;border:1px solid #5c1a1a;border-radius:10px;
@@ -131,7 +136,7 @@
             <p id="toggle-msg" style="margin-top:0.75rem;font-size:0.85rem" hidden></p>
           </section>
 
-          <!-- Verificar / Agregar (flujo unificado) -->
+          <!-- Verificar / Agregar -->
           <section class="card">
             <h2>Verificar correo</h2>
             <p style="font-size:0.85rem;color:#8fa8be;margin-bottom:0.75rem">
