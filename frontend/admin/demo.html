@@ -175,8 +175,12 @@
             <section class="card">
               <h2>Auto-adaptación de σ</h2>
               <canvas id="chart-sigma" width="560" height="300"></canvas>
-              <p class="chart-cap">σ promedio por generación (escala log). <strong>Esto es lo que
-                un σ fijo nunca hace</strong>: el algoritmo encoge su paso solo al converger.</p>
+              <p style="margin: 0.9rem 0 0.4rem; font-size: 1rem; text-align: center;">
+                \[\sigma' = \sigma \cdot e^{\,\tau \cdot \mathcal{N}(0,\,1)} \qquad \longrightarrow \qquad x' = x + \sigma' \cdot \mathcal{N}(0,\,1)\]
+              </p>
+              <p class="chart-cap">σ muta <strong>primero</strong>, x usa ese nuevo σ — ese orden
+                es lo que permite que el paso de mutación se auto-calibre antes de mover la solución.
+                La gráfica (escala log) muestra cómo el algoritmo encoge σ solo al converger.</p>
             </section>
           </div>
 
