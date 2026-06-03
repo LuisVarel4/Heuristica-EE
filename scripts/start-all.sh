@@ -51,7 +51,7 @@ fi
 # shellcheck source=/dev/null
 source .venv/bin/activate
 pip install -q -r requirements.txt
-nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 \
+nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 \
   >"$LOG_DIR/backend.log" 2>&1 &
 echo $! >"$LOG_DIR/backend.pid"
 deactivate 2>/dev/null || true
