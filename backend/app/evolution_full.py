@@ -73,7 +73,11 @@ def ejecutar_es(
 
     history: list[dict[str, Any]] = []
 
-    def registrar(gen: int, pop: list[tuple[float, float]]) -> None:
+    def registrar(
+        gen: int,
+        pop: list[tuple[float, float]],
+        hijos: list[tuple[float, float]] | None = None,
+    ) -> None:
         fits = [fitness(x) for x, _ in pop]
         best_i = min(range(len(pop)), key=lambda i: fits[i])
         history.append(
@@ -83,6 +87,7 @@ def ejecutar_es(
                 "best_x": pop[best_i][0],
                 "mean_sigma": sum(s for _, s in pop) / len(pop),
                 "poblacion": _sample_xs([x for x, _ in pop], pop_cap, rng),
+                "hijos": _sample_xs([x for x, _ in hijos], pop_cap, rng) if hijos else [],
             }
         )
 
@@ -101,9 +106,9 @@ def ejecutar_es(
             hijos.append((x_new, sigma_new))
 
         # Selección (μ, λ) coma: los mejores μ salen solo de los hijos.
-        hijos.sort(key=lambda ind: fitness(ind[0]))
-        poblacion = hijos[:mu]
-        registrar(gen, poblacion)
+        hijos_ordenados = sorted(hijos, key=lambda ind: fitness(ind[0]))
+        poblacion = hijos_ordenados[:mu]
+        registrar(gen, poblacion, hijos)
 
     mejor = min(poblacion, key=lambda ind: fitness(ind[0]))
     return {

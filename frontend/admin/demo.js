@@ -29,6 +29,7 @@ const runSelect     = document.getElementById("run-select");
 const genSlider     = document.getElementById("gen-slider");
 const genLabel      = document.getElementById("gen-label");
 const btnPlay       = document.getElementById("btn-play");
+const showChildren  = document.getElementById("show-children");
 
 const statGlobal  = document.getElementById("stat-global");
 const statSuccess = document.getElementById("stat-success");
@@ -60,7 +61,7 @@ function makeScale(d0, d1, r0, r1) {
 }
 
 // ── Gráfica de líneas genérica (convergencia y σ) ──────────────────────────
-function plotLines(canvas, { series, xLabel, yRef, yLog }) {
+function plotLines(canvas, { series, xLabel, yRef, yLog, guideZero }) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
   const padL = 60, padR = 14, padT = 14, padB = 34;
@@ -98,6 +99,17 @@ function plotLines(canvas, { series, xLabel, yRef, yLog }) {
     const xv = xmin + (xmax - xmin) * (i / 6);
     ctx.fillText(Math.round(xv), sx(xv), H - padB + 6);
   }
+  // Línea guía sutil en y = 0 (frontera positivo/negativo)
+  if (guideZero && !yLog && tymin < 0 && tymax > 0) {
+    const py = sy(0);
+    ctx.strokeStyle = COLORS.muted; ctx.globalAlpha = 0.55;
+    ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, py); ctx.lineTo(W - padR, py); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = COLORS.muted; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+    ctx.fillText("0", padL + 3, py - 2);
+  }
+
   // Línea de referencia (óptimo global)
   if (yRef != null) {
     const py = sy(ty(yRef));
@@ -121,7 +133,7 @@ function plotLines(canvas, { series, xLabel, yRef, yLog }) {
 }
 
 // ── Gráfica de población sobre f(x) ────────────────────────────────────────
-function plotPopulation(canvas, genData, globalX) {
+function plotPopulation(canvas, genData, globalX, showChildren) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
   const padL = 56, padR = 16, padT = 16, padB = 34;
@@ -162,6 +174,15 @@ function plotPopulation(canvas, genData, globalX) {
 
   // Individuos
   if (genData) {
+    // Hijos (enjambre): puntitos azul claro tenues, debajo de los padres
+    if (showChildren && genData.hijos && genData.hijos.length) {
+      ctx.fillStyle = "#6fa8dc"; ctx.globalAlpha = 0.45;
+      genData.hijos.forEach((x) => {
+        ctx.beginPath(); ctx.arc(sx(x), sy(fitness(x)), 2.3, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+    // Padres (μ sobrevivientes): puntos verdes
     ctx.fillStyle = COLORS.ok;
     genData.poblacion.forEach((x) => {
       ctx.beginPath(); ctx.arc(sx(x), sy(fitness(x)), 4, 0, Math.PI * 2); ctx.fill();
@@ -181,6 +202,7 @@ function renderCharts() {
   plotLines(chartFit, {
     xLabel: "generación",
     yRef: gfit,
+    guideZero: true,
     series: runs.map((r, i) => ({
       points: r.history.map((h) => ({ x: h.gen, y: h.best_fitness })),
       color: i === selectedRun ? COLORS.accent : COLORS.faint,
@@ -204,7 +226,7 @@ function renderCharts() {
   // Población: corrida seleccionada, generación del slider
   const run = runs[selectedRun];
   const gen = Math.min(Number(genSlider.value), run.history.length - 1);
-  plotPopulation(chartPop, run.history[gen], lastData.global_optimum.x);
+  plotPopulation(chartPop, run.history[gen], lastData.global_optimum.x, showChildren.checked);
   genLabel.textContent = `Gen ${run.history[gen].gen}`;
 }
 
@@ -316,6 +338,7 @@ adminKeyInput.addEventListener("keydown", (e) => { if (e.key === "Enter") authen
 btnRun.addEventListener("click", run);
 runSelect.addEventListener("change", (e) => selectRun(Number(e.target.value)));
 genSlider.addEventListener("input", () => { stopPlay(); renderCharts(); });
+showChildren.addEventListener("change", renderCharts);
 btnPlay.addEventListener("click", () => { playTimer ? stopPlay() : startPlay(); });
 
 // Restaurar sesión
