@@ -12,10 +12,15 @@
       .badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
       .badge-on  { background: #1a5c2a; color: #6effa0; }
       .badge-off { background: #5c1a1a; color: #ffaaaa; }
-      .email-list { max-height: 340px; overflow-y: auto; font-size: 0.85rem; }
+      .badge-found   { background: #1a5c2a; color: #6effa0; }
+      .badge-missing { background: #5c1a1a; color: #ffaaaa; }
+      .email-list { max-height: 300px; overflow-y: auto; font-size: 0.85rem; }
       .email-list li { padding: 0.25rem 0; border-bottom: 1px solid #1e3a5f; }
+      .email-list li.highlight { background: #1a3a5c; border-radius: 4px; padding-left: 6px; }
       .key-gate { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
       .key-gate input { flex: 1; }
+      .search-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+      .search-row input { flex: 1; }
     </style>
   </head>
   <body>
@@ -69,9 +74,22 @@
           </section>
         </div>
 
+        <!-- Buscador -->
+        <section class="card" style="margin-top:1.5rem">
+          <h2>Buscar correo en la lista</h2>
+          <div class="search-row">
+            <input type="email" id="search-input" placeholder="correo@unal.edu.co" />
+            <button id="btn-search">Buscar</button>
+          </div>
+          <p id="search-result" style="font-size:0.9rem;margin-top:0.5rem" hidden></p>
+        </section>
+
         <!-- Lista de correos -->
         <section class="card" style="margin-top:1.5rem">
           <h2>Correos en la lista blanca (<span id="wl-count">0</span>)</h2>
+          <div style="margin-bottom:0.75rem">
+            <input type="text" id="filter-input" placeholder="Filtrar lista…" style="width:100%;box-sizing:border-box" />
+          </div>
           <ul id="wl-list" class="email-list"></ul>
         </section>
       </div>
