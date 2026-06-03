@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Demo — EE auto-adaptativa</title>
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+            onload="renderMathInElement(document.body, {delimiters: [{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]})"></script>
     <style>
       .key-gate { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
       .key-gate input { flex: 1; }
       .back-link { display: inline-block; margin-bottom: 1rem; color: var(--muted);
-                   font-size: 0.85rem; text-decoration: none; }
+                   font-size: 0.95rem; text-decoration: none; }
       .back-link:hover { color: var(--text); }
       .param-row { display: grid; gap: 0.9rem; margin-bottom: 1rem; align-items: start; }
       .param-row.pop  { grid-template-columns: repeat(4, 1fr); }
@@ -20,8 +24,8 @@
       .param-row label { margin: 0; display: flex; flex-direction: column;
                          font-size: 0.82rem; color: var(--muted); }
       .param-row input { margin-top: 0.35rem; height: 42px; }
-      .field-hint { font-size: 0.82rem; color: var(--muted); margin-top: 0.4rem;
-                    line-height: 1.45; }
+      .field-hint { font-size: 0.92rem; color: var(--muted); margin-top: 0.4rem;
+                    line-height: 1.5; }
       .row-title { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em;
                    color: var(--muted); margin: 0 0 0.5rem; opacity: 0.8; }
       .run-bar { display: flex; justify-content: flex-end; align-items: center;
@@ -35,7 +39,7 @@
       .stat span { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
       canvas { width: 100%; height: auto; display: block; background: #0d1117;
                border: 1px solid var(--border); border-radius: 8px; }
-      .chart-cap { font-size: 0.82rem; color: var(--muted); margin: 0.5rem 0 0; }
+      .chart-cap { font-size: 0.92rem; color: var(--muted); margin: 0.5rem 0 0; line-height: 1.5; }
       .anim-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
       .anim-row input[type=range] { flex: 1; margin: 0; }
       .pill { display:inline-block; padding:0.15rem 0.6rem; border-radius:999px;
@@ -49,7 +53,7 @@
       .seg-useful { background: var(--ok); }
       .seg-waste  { background: var(--warn); }
       .cost-legend { display:flex; flex-wrap:wrap; gap:1.25rem; margin-top:0.6rem;
-                     font-size:0.85rem; color:var(--muted); }
+                     font-size:0.92rem; color:var(--muted); }
       .dot { display:inline-block; width:10px; height:10px; border-radius:50%;
              margin-right:0.35rem; vertical-align:middle; }
       .dot-useful { background: var(--ok); }
@@ -82,7 +86,7 @@
           <h2>Función objetivo — la misma que intentaron minimizar</h2>
           <canvas id="chart-func" width="1100" height="260"></canvas>
           <p class="chart-cap">
-            f(x) = 0.25·(x−2.1)² + sin(2.8x) + 0.6·cos(4.2x) + 0.15·sin(1.7x+1.2)²  ·  x ∈ [−10, 10].
+            \(f(x) = 0.25\,(x-2.1)^2 + \sin(2.8x) + 0.6\cos(4.2x) + 0.15\sin^2(1.7x+1.2)\,,\quad x \in [-10,\,10]\).
             La línea punteada naranja marca el óptimo global.
           </p>
         </section>
@@ -106,8 +110,10 @@
           <div class="param-row ctrl">
             <label>τ (learning rate)
               <input type="number" id="tau" placeholder="auto" min="0.01" max="5" step="0.01" />
-              <span class="field-hint">Vacío = auto. Regla de Schwefel para 1D:
-                τ = 1/√2 ≈ 0.7071. Controla la agresividad con la que muta el paso σ.</span>
+              <span class="field-hint">
+                Vacío = auto. Regla de Schwefel: \(\tau = \frac{1}{\sqrt{2n}}\), con \(n=1\) variable
+                → \(\tau = \frac{1}{\sqrt{2}} \approx 0.7071\). Controla la agresividad con la que muta \(\sigma\).
+              </span>
             </label>
             <label>Corridas
               <input type="number" id="runs" value="5" min="1" max="30" step="1" /></label>
